@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/state/itinerary_store.dart';
 import '../../models/destination.dart';
 import 'widgets/safety_score_widget.dart';
+import '../travel/map_screen.dart';
 
 class DestinationDetailsScreen extends StatelessWidget {
   final Destination destination;
@@ -55,6 +56,24 @@ class DestinationDetailsScreen extends StatelessWidget {
                       );
                     },
                   ),
+                  const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MapScreen(
+                                destination: destination,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.navigation),
+                        label: const Text('Start Journey'),
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -5,10 +5,14 @@ import '../../models/destination.dart';
 /// Singleton so any screen can read/update it without prop-drilling.
 class ItineraryStore extends ChangeNotifier {
   ItineraryStore._internal();
-  static final ItineraryStore instance = ItineraryStore._internal();
+
+  static final ItineraryStore instance =
+      ItineraryStore._internal();
 
   final List<Destination> _items = [];
-  List<Destination> get items => List.unmodifiable(_items);
+
+  List<Destination> get items =>
+      List.unmodifiable(_items);
 
   bool isAdded(String destinationId) =>
       _items.any((d) => d.id == destinationId);
@@ -21,11 +25,31 @@ class ItineraryStore extends ChangeNotifier {
   }
 
   void remove(String destinationId) {
-    _items.removeWhere((d) => d.id == destinationId);
+    _items.removeWhere(
+      (d) => d.id == destinationId,
+    );
+
     notifyListeners();
   }
 
   void toggle(Destination destination) {
-    isAdded(destination.id) ? remove(destination.id) : add(destination);
+    isAdded(destination.id)
+        ? remove(destination.id)
+        : add(destination);
+  }
+
+  void reorder(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    final destination = _items.removeAt(oldIndex);
+
+    _items.insert(
+      newIndex,
+      destination,
+    );
+
+    notifyListeners();
   }
 }

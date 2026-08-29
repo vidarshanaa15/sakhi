@@ -3,6 +3,7 @@ import '../../core/state/itinerary_store.dart';
 import '../destination/destination_details_screen.dart';
 import '../destination/widgets/safety_score_widget.dart';
 import '../../widgets/empty_state.dart';
+import '../travel/itinerary_map_screen.dart';
 
 class ItineraryScreen extends StatelessWidget {
   const ItineraryScreen({super.key});
@@ -10,7 +11,24 @@ class ItineraryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Itinerary')),
+      appBar: AppBar(
+        title: const Text('My Itinerary'),
+        actions: [
+          if (ItineraryStore.instance.items.isNotEmpty)
+            IconButton(
+              tooltip: 'View trip on map',
+              icon: const Icon(Icons.map),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ItineraryMapScreen(),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
       body: ListenableBuilder(
         listenable: ItineraryStore.instance,
         builder: (context, _) {
@@ -27,8 +45,10 @@ class ItineraryScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             itemCount: items.length,
             onReorder: (oldIndex, newIndex) {
-              // Reordering is cosmetic for now — store keeps insertion order.
-              // Hook this up if/when the store supports explicit ordering.
+              ItineraryStore.instance.reorder(
+                oldIndex,
+                newIndex,
+              );
             },
             itemBuilder: (context, index) {
               final dest = items[index];
@@ -64,5 +84,6 @@ class ItineraryScreen extends StatelessWidget {
         },
       ),
     );
+  
   }
 }
