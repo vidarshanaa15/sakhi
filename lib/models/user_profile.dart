@@ -24,7 +24,7 @@ final mockUserProfile = UserProfile(
   email: 'sandhya@example.com',
   avatarUrl: 'https://i.pravatar.cc/150?img=47',
   emergencyContacts: const [
-    EmergencyContact(name: 'Amma', phone: '+91 98765 43210'),
+    EmergencyContact(name: 'Amma', phone: '+91 81483 63801'),
     EmergencyContact(name: 'Roommate - Priya', phone: '+91 91234 56789'),
   ],
 );

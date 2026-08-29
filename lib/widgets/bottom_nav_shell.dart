@@ -3,6 +3,7 @@ import '../screens/home/home_screen.dart';
 import '../screens/search/search_screen.dart';
 import '../screens/itinerary/itinerary_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import 'sos_button.dart';
 
 class BottomNavShell extends StatefulWidget {
   const BottomNavShell({super.key});
@@ -17,7 +18,16 @@ class _BottomNavShellState extends State<BottomNavShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_index],
+      body: Stack(
+        children: [
+          _screens[_index],
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: SafeArea(child: const SosButton()),
+          ),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),

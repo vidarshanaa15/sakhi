@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/destination.dart';
 import '../destination/destination_details_screen.dart';
 import '../destination/widgets/safety_score_widget.dart';
+import '../evidence/evidence_screen.dart';
+import '../report/nearby_reports_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -9,7 +11,27 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sakhi')),
+      appBar: AppBar(
+        title: const Text('Sakhi'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.camera_alt_outlined),
+            tooltip: 'Evidence',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EvidenceScreen()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.report_outlined),
+            tooltip: 'Community Reports',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NearbyReportsScreen()),
+            ),
+          ),
+        ],
+      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: mockDestinations.length,
