@@ -12,6 +12,9 @@ import '../../services/geocoding_service.dart';
 import '../../models/route_leg.dart';
 import '../../services/safety_service.dart';
 
+import '../../widgets/safety_pill.dart';
+import '../../widgets/gradient_action_button.dart';
+
 class MapScreen extends StatefulWidget {
   final Destination destination;
 
@@ -32,10 +35,10 @@ class _MapScreenState extends State<MapScreen> {
       RouteService();
 
   final GeocodingService _geocodingService =
-    GeocodingService();
+      GeocodingService();
 
   final SafetyService _safetyService =
-    SafetyService();
+      SafetyService();
 
   final MapController _mapController =
       MapController();
@@ -77,108 +80,99 @@ class _MapScreenState extends State<MapScreen> {
       _loading = false;
     });
 
-    _mapController.move(
-      location,
-      15,
-    );
+    _mapController.move(location, 15);
   }
 
   Future<void> _createRoute() async {
-  if (_currentLocation == null) return;
+    if (_currentLocation == null) return;
 
-  setState(() {
-    _loadingRoute = true;
-    _routes = [];
-    _selectedRouteIndex = null;
-  });
-
-  final destination =
-      await _geocodingService.getCoordinates(
-    widget.destination.name,
-  );
-
-  if (!mounted) return;
-
-  if (destination == null) {
     setState(() {
-      _loadingRoute = false;
+      _loadingRoute = true;
+      _routes = [];
+      _selectedRouteIndex = null;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Could not find this destination.',
-        ),
-      ),
+    final destination =
+        await _geocodingService.getCoordinates(
+      widget.destination.name,
     );
 
-    return;
-  }
+    if (!mounted) return;
 
-  final routes =
-      await _routeService.getAlternativeRoutes(
-    start: _currentLocation!,
-    destination: destination,
-  );
+    if (destination == null) {
+      setState(() {
+        _loadingRoute = false;
+      });
 
-  if (!mounted) return;
-
-  if (routes.isEmpty) {
-    setState(() {
-      _loadingRoute = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Could not find a route to this destination.',
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not find this destination.'),
         ),
-      ),
-    );
+      );
 
-    return;
-  }
+      return;
+    }
 
-  final List<RouteLeg> evaluatedRoutes = [];
-
-  for (int i = 0; i < routes.length; i++) {
-    final route = routes[i];
-
-    final leg = RouteLeg(
-      startName: 'Current Location',
-      endName: widget.destination.name,
+    final routes = await _routeService.getAlternativeRoutes(
       start: _currentLocation!,
-      end: destination,
-      points: route.points,
-      distanceMeters: route.distanceMeters,
-      durationSeconds: route.durationSeconds,
+      destination: destination,
     );
 
-    // Temporary safety scores.
-    // These will eventually come from FastAPI.
-    final mockScores = [7.4, 9.1, 6.8];
+    if (!mounted) return;
 
-    final score = mockScores[
-      i < mockScores.length ? i : mockScores.length - 1
-    ];
+    if (routes.isEmpty) {
+      setState(() {
+        _loadingRoute = false;
+      });
 
-    final evaluated =
-        await _safetyService.evaluateRoute(
-      leg,
-      mockScore: score,
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not find a route to this destination.'),
+        ),
+      );
 
-    evaluatedRoutes.add(evaluated);
+      return;
+    }
+
+    final List<RouteLeg> evaluatedRoutes = [];
+
+    for (int i = 0; i < routes.length; i++) {
+      final route = routes[i];
+
+      final leg = RouteLeg(
+        startName: 'Current Location',
+        endName: widget.destination.name,
+        start: _currentLocation!,
+        end: destination,
+        points: route.points,
+        distanceMeters: route.distanceMeters,
+        durationSeconds: route.durationSeconds,
+      );
+
+      // Temporary safety scores.
+      // These will eventually come from FastAPI.
+      final mockScores = [7.4, 9.1, 6.8];
+
+      final score = mockScores[
+          i < mockScores.length ? i : mockScores.length - 1];
+
+      final evaluated = await _safetyService.evaluateRoute(
+        leg,
+        mockScore: score,
+      );
+
+      evaluatedRoutes.add(evaluated);
+    }
+
+    setState(() {
+      _routes = evaluatedRoutes;
+      _selectedRouteIndex = 0;
+      _loadingRoute = false;
+    });
+
+    _fitRoute(_routes[0].points);
   }
 
-  setState(() {
-    _routes = evaluatedRoutes;
-    _selectedRouteIndex = 0;
-    _loadingRoute = false;
-  });
-
-  _fitRoute(_routes[0].points);
-}
   void _fitRoute(List<LatLng> points) {
     if (points.isEmpty) return;
 
@@ -194,126 +188,10 @@ class _MapScreenState extends State<MapScreen> {
 
   void _goToCurrentLocation() {
     if (_currentLocation == null) return;
-
-    _mapController.move(
-      _currentLocation!,
-      15,
-    );
+    _mapController.move(_currentLocation!, 15);
   }
 
-  Widget _buildRouteSelectionCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Choose your route',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            ..._routes.asMap().entries.map((entry) {
-              final index = entry.key;
-              final route = entry.value;
-
-              final isSelected =
-                  index == _selectedRouteIndex;
-
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedRouteIndex = index;
-                  });
-
-                  _fitRoute(route.points);
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(
-                    bottom: 8,
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isSelected
-                          ? Colors.green
-                          : Colors.grey.shade300,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    borderRadius:
-                        BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isSelected
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_off,
-                        color: isSelected
-                            ? Colors.green
-                            : Colors.grey,
-                      ),
-
-                      const SizedBox(width: 10),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _routeLabel(index, route),
-                              style: const TextStyle(
-                                fontWeight:
-                                    FontWeight.bold,
-                              ),
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              '${route.distanceKm.toStringAsFixed(1)} km • '
-                              '${route.durationMinutes} min',
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              'Safety: '
-                              '${route.safetyScore?.toStringAsFixed(1)}/10',
-                              style: TextStyle(
-                                fontWeight:
-                                    FontWeight.w600,
-                                color: route.safetyScore! >= 8
-                                    ? Colors.green
-                                    : route.safetyScore! >= 6.5
-                                        ? Colors.orange
-                                        : Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _routeLabel(
-    int index,
-    RouteLeg route,
-  ) {
+  String _routeLabel(int index, RouteLeg route) {
     if (route.safetyScore == null) {
       return 'Route ${index + 1}';
     }
@@ -327,19 +205,27 @@ class _MapScreenState extends State<MapScreen> {
         .reduce((a, b) => a < b ? a : b);
 
     if (route.safetyScore == safestScore) {
-      return '⭐ Safest Route';
+      return 'Safest route';
     }
 
     if (route.durationSeconds == fastestDuration) {
-      return '⚡ Fastest Route';
+      return 'Fastest route';
     }
 
     return 'Route ${index + 1}';
   }
 
+  IconData _routeIcon(int index, RouteLeg route) {
+    final label = _routeLabel(index, route);
+    if (label == 'Safest route') return Icons.shield_rounded;
+    if (label == 'Fastest route') return Icons.bolt_rounded;
+    return Icons.alt_route_rounded;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (_loading) {
       return const Scaffold(
         body: Center(
@@ -364,57 +250,66 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: const Text('Sakhi Map'),
+        title: Text(widget.destination.name),
+        elevation: 0,
       ),
-
       body: Stack(
         children: [
           FlutterMap(
             mapController: _mapController,
-
             options: MapOptions(
               initialCenter: _currentLocation!,
               initialZoom: 15,
             ),
-
             children: [
               TileLayer(
                 urlTemplate:
                     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName:
-                    'com.example.sakhi_app',
+                userAgentPackageName: 'com.example.sakhi_app',
               ),
 
               if (_routes.isNotEmpty)
-              PolylineLayer(
-                polylines: _routes.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final route = entry.value;
+                PolylineLayer(
+                  polylines: _routes.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final route = entry.value;
+                    final isSelected = index == _selectedRouteIndex;
 
-                  final isSelected =
-                      index == _selectedRouteIndex;
-
-                  return Polyline(
-                    points: route.points,
-                    strokeWidth: isSelected ? 6 : 4,
-                    color: isSelected
-                        ? Colors.green
-                        : Colors.grey,
-                  );
-                }).toList(),
-              ),
+                    return Polyline(
+                      points: route.points,
+                      strokeWidth: isSelected ? 6 : 4,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.outline.withValues(alpha: 0.4),
+                    );
+                  }).toList(),
+                ),
 
               MarkerLayer(
                 markers: [
                   Marker(
                     point: _currentLocation!,
-                    width: 50,
-                    height: 50,
-                    child: const Icon(
-                      Icons.location_pin,
-                      size: 45,
-                      color: Colors.red,
+                    width: 46,
+                    height: 46,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.navigation_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],
@@ -428,33 +323,29 @@ class _MapScreenState extends State<MapScreen> {
             bottom: 90,
             child: Column(
               children: [
-                if (_routes.isNotEmpty)
-                  _buildRouteSelectionCard(),
-                const SizedBox(height: 8),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed:
-                        _loadingRoute
-                            ? null
-                            : _createRoute,
-                    icon: _loadingRoute
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child:
-                                CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(Icons.route),
-                    label: Text(
-                      _loadingRoute
-                          ? 'Finding Route...'
-                          : 'Find Route',
-                    ),
-                  ),
+                if (_routes.isNotEmpty) _RouteOptionsCard(
+                  routes: _routes,
+                  selectedIndex: _selectedRouteIndex,
+                  labelFor: _routeLabel,
+                  iconFor: _routeIcon,
+                  onSelect: (index) {
+                    setState(() {
+                      _selectedRouteIndex = index;
+                    });
+                    _fitRoute(_routes[index].points);
+                  },
+                ),
+                const SizedBox(height: 10),
+                GradientActionButton(
+                  icon: Icons.route_rounded,
+                  label: _loadingRoute
+                      ? 'Finding route...'
+                      : (_routes.isEmpty ? 'Find route' : 'Refresh route'),
+                  subtitle: _routes.isEmpty
+                      ? 'See alternate paths & safety scores'
+                      : null,
+                  loading: _loadingRoute,
+                  onTap: _createRoute,
                 ),
               ],
             ),
@@ -464,12 +355,150 @@ class _MapScreenState extends State<MapScreen> {
             right: 16,
             bottom: 24,
             child: FloatingActionButton(
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.primary,
               onPressed: _goToCurrentLocation,
-              child: const Icon(
-                Icons.my_location,
-              ),
+              child: const Icon(Icons.my_location_rounded),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RouteOptionsCard extends StatelessWidget {
+  final List<RouteLeg> routes;
+  final int? selectedIndex;
+  final String Function(int, RouteLeg) labelFor;
+  final IconData Function(int, RouteLeg) iconFor;
+  final ValueChanged<int> onSelect;
+
+  const _RouteOptionsCard({
+    required this.routes,
+    required this.selectedIndex,
+    required this.labelFor,
+    required this.iconFor,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Choose your route',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          ...routes.asMap().entries.map((entry) {
+            final index = entry.key;
+            final route = entry.value;
+            final isSelected = index == selectedIndex;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => onSelect(index),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? colorScheme.primary.withValues(alpha: 0.08)
+                        : colorScheme.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      width: isSelected ? 1.6 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colorScheme.primary
+                              : colorScheme.surfaceContainerHighest,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          iconFor(index, route),
+                          size: 16,
+                          color: isSelected
+                              ? Colors.white
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              labelFor(index, route),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.straighten_rounded,
+                                    size: 13, color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${route.distanceKm.toStringAsFixed(1)} km',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Icon(Icons.schedule_rounded,
+                                    size: 13, color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${route.durationMinutes} min',
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      SafetyPill(score: route.safetyScore),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );

@@ -1,5 +1,7 @@
 import 'package:latlong2/latlong.dart';
 
+/// A single computed route between two points in the itinerary,
+/// with optional safety-scoring metadata attached.
 class RouteLeg {
   final String startName;
   final String endName;
@@ -12,12 +14,11 @@ class RouteLeg {
   final double distanceMeters;
   final double durationSeconds;
 
-  // Safety information
   final double? safetyScore;
   final String? safetyLevel;
-  final List<String> safetyReasons;
+  final List<String>? safetyReasons;
 
-  const RouteLeg({
+  RouteLeg({
     required this.startName,
     required this.endName,
     required this.start,
@@ -27,14 +28,10 @@ class RouteLeg {
     required this.durationSeconds,
     this.safetyScore,
     this.safetyLevel,
-    this.safetyReasons = const [],
+    this.safetyReasons,
   });
 
   double get distanceKm => distanceMeters / 1000;
 
-  int get durationMinutes =>
-      (durationSeconds / 60).round();
-
-  bool get hasSafetyData =>
-      safetyScore != null;
+  int get durationMinutes => (durationSeconds / 60).round();
 }
