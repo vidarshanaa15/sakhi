@@ -16,6 +16,23 @@ class DestinationDetailsScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 240,
             pinned: true,
+            // Automatic back button rendered in the theme's black87
+            // foregroundColor directly over the photo with no scrim,
+            // so it was often invisible against light/busy images.
+            // Explicit leading button in a translucent dark circle
+            // stays visible over any photo, collapsed or expanded.
+            automaticallyImplyLeading: false,
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                backgroundColor: Colors.black.withOpacity(0.35),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                  tooltip: 'Back',
+                ),
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
                 tag: 'dest-image-${destination.id}',
@@ -57,23 +74,23 @@ class DestinationDetailsScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => MapScreen(
-                                destination: destination,
-                              ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MapScreen(
+                              destination: destination,
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.navigation),
-                        label: const Text('Start Journey'),
-                      ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.navigation),
+                      label: const Text('Start Journey'),
                     ),
+                  ),
                 ],
               ),
             ),

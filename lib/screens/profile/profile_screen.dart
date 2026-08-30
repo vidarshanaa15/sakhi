@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/state/settings_store.dart';
+import '../../core/state/auth_store.dart';
 import '../../models/user_profile.dart';
 import '../auth/login_screen.dart';
 import '../../widgets/section_header.dart';
@@ -38,12 +39,25 @@ class ProfileScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 8),
-          Chip(
-            avatar: const Icon(Icons.verified_user, size: 18, color: Colors.green),
-            label: const Text('Identity not verified'),
-            backgroundColor: Colors.orange.withOpacity(0.1),
+
+          // Reads live from AuthStore — flips to "Verified via DigiLocker"
+          // the moment AadhaarVerifyScreen calls markVerified(), no
+          // separate wiring needed on this screen beyond this listener.
+          ListenableBuilder(
+            listenable: AuthStore.instance,
+            builder: (context, _) {
+              final verified = AuthStore.instance.isVerified;
+              return Chip(
+                avatar: Icon(
+                  verified ? Icons.verified_user : Icons.gpp_maybe_outlined,
+                  size: 18,
+                  color: verified ? Colors.green : Colors.orange,
+                ),
+                label: Text(verified ? 'Verified via DigiLocker' : 'Identity not verified'),
+                backgroundColor: (verified ? Colors.green : Colors.orange).withOpacity(0.1),
+              );
+            },
           ),
-          // ^ swap to "Verified via DigiLocker" once auth integration lands
 
           const SizedBox(height: 24),
           SectionHeader('Emergency Contacts'),
@@ -117,11 +131,16 @@ class ProfileScreen extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-              onPressed: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-              ),
+              onPressed: () {
+                // Clear verification state on logout so a different user
+                // logging in on this device doesn't inherit it.
+                AuthStore.instance.reset();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                );
+              },
               icon: const Icon(Icons.logout),
               label: const Text('Log out'),
             ),
