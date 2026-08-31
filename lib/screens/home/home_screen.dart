@@ -4,6 +4,7 @@ import '../destination/destination_details_screen.dart';
 import '../destination/widgets/safety_score_widget.dart';
 import '../evidence/evidence_screen.dart';
 import '../report/nearby_reports_screen.dart';
+import '../chatbot/chatbot_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,19 +16,35 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Sakhi'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: 'Ask Sakhi',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ChatbotScreen(),
+              ),
+            ),
+          ),
+
+          IconButton(
             icon: const Icon(Icons.camera_alt_outlined),
             tooltip: 'Evidence',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const EvidenceScreen()),
+              MaterialPageRoute(
+                builder: (_) => const EvidenceScreen(),
+              ),
             ),
           ),
+
           IconButton(
             icon: const Icon(Icons.report_outlined),
             tooltip: 'Community Reports',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const NearbyReportsScreen()),
+              MaterialPageRoute(
+                builder: (_) => const NearbyReportsScreen(),
+              ),
             ),
           ),
         ],

@@ -50,7 +50,7 @@ class EvidenceService {
   //   );
   //   await EvidenceStore.instance.markUploaded(evidence.id);
   // }
-  static const bool useMockData = true;
+  static const bool useMockData = false;
 
   Future<void> upload(Evidence evidence) async {
     if (useMockData) {
