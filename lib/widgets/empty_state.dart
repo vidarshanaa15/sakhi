@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_spacing.dart';
+import '../core/theme/app_theme.dart';
 
 class EmptyState extends StatelessWidget {
   final IconData icon;
@@ -15,12 +16,12 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: Colors.grey[400]),
+            Icon(icon, size: 56, color: AppTheme.primary.withOpacity(0.25)),
             const SizedBox(height: AppSpacing.md),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: AppTheme.textSecondary),
             ),
           ],
         ),

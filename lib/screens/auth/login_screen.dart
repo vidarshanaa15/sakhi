@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../widgets/app_shell.dart';
 import '../auth/digilocker_auth_screen.dart';
 import '../../core/state/auth_store.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_spacing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'signup_screen.dart';
 
@@ -21,8 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSubmitting = false;
   String? _authError;
 
-  static final RegExp _emailRegex =
-  RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+  static final RegExp _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   @override
   void dispose() {
@@ -33,122 +34,95 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _validateEmail(String? value) {
     final v = value?.trim() ?? '';
-
-    if (v.isEmpty) {
-      return 'Enter your email';
-    }
-
-    if (!_emailRegex.hasMatch(v)) {
-      return 'Enter a valid email address';
-    }
-
+    if (v.isEmpty) return 'Enter your email';
+    if (!_emailRegex.hasMatch(v)) return 'Enter a valid email address';
     return null;
   }
 
   String? _validatePassword(String? value) {
     final v = value ?? '';
-
-    if (v.isEmpty) {
-      return 'Enter your password';
-    }
-
-    if (v.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-
+    if (v.isEmpty) return 'Enter your password';
+    if (v.length < 6) return 'Password must be at least 6 characters';
     return null;
   }
 
   Future<void> _handleLogin() async {
-  setState(() => _authError = null);
+    setState(() => _authError = null);
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) return;
 
-  final isValid = _formKey.currentState?.validate() ?? false;
-  if (!isValid) return;
+    setState(() => _isSubmitting = true);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-  setState(() => _isSubmitting = true);
+    try {
+      final response = await AuthStore.instance.signIn(email: email, password: password);
+      if (!mounted) return;
 
-  final email = _emailController.text.trim();
-  final password = _passwordController.text;
-
-  try {
-    final response = await AuthStore.instance.signIn(
-      email: email,
-      password: password,
-    );
-
-    if (!mounted) return;
-
-    if (response.session != null) {
-      setState(() => _isSubmitting = false);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AppShell()),
-      );
-    } else {
+      if (response.session != null) {
+        setState(() => _isSubmitting = false);
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AppShell()));
+      } else {
+        setState(() {
+          _isSubmitting = false;
+          _authError = 'Login failed. Please try again.';
+        });
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        _authError = 'Login failed. Please try again.';
+        _authError = e.message;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _authError = 'Something went wrong. Please check your connection.';
       });
     }
-  } on AuthException catch (e) {
-    if (!mounted) return;
-    setState(() {
-      _isSubmitting = false;
-      _authError = e.message;
-    });
-  } catch (e) {
-    if (!mounted) return;
-    setState(() {
-      _isSubmitting = false;
-      _authError = 'Something went wrong. Please check your connection.';
-    });
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Form(
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.shield,
-                  size: 64,
-                ),
-
-                const SizedBox(height: 12),
-
-                const Text(
-                  'Sakhi',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                   ),
+                  child: const Icon(Icons.shield, size: 36, color: Colors.white),
                 ),
+                const SizedBox(height: AppSpacing.md),
+                Text('Sakhi', style: Theme.of(context).textTheme.headlineMedium),
+                const SizedBox(height: 4),
+                Text(
+                  'Welcome back',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                ),
+                const SizedBox(height: AppSpacing.xl),
 
-                const SizedBox(height: 24),
-
-                // Email
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Email'),
                   validator: _validateEmail,
                 ),
+                const SizedBox(height: AppSpacing.sm + 4),
 
-                const SizedBox(height: 12),
-
-                // Password
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -156,111 +130,87 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _handleLogin(),
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        color: AppTheme.textSecondary,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: _validatePassword,
                 ),
 
-                // Authentication error
                 if (_authError != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _authError!,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 13,
+                  const SizedBox(height: AppSpacing.sm + 4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: AppTheme.safetyRed.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    ),
+                    child: Text(
+                      _authError!,
+                      style: const TextStyle(color: AppTheme.safetyRed, fontSize: 13),
                     ),
                   ),
                 ],
 
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.lg),
 
-                // Normal Login Button
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed:
-                    _isSubmitting ? null : _handleLogin,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                          : const Text('Log in'),
-                    ),
+                    onPressed: _isSubmitting ? null : _handleLogin,
+                    child: _isSubmitting
+                        ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                        : const Text('Log in'),
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.sm + 4),
 
-                // OR divider
-                const Row(
+                Row(
                   children: [
-                    Expanded(
-                      child: Divider(),
-                    ),
+                    Expanded(child: Divider(color: Colors.black.withOpacity(0.08))),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Text('or'),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      child: Text('or', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
                     ),
-                    Expanded(
-                      child: Divider(),
-                    ),
+                    Expanded(child: Divider(color: Colors.black.withOpacity(0.08))),
                   ],
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.sm + 4),
 
-                // DigiLocker Button
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                          const DigiLockerAuthScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.verified_user_outlined,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      foregroundColor: AppTheme.primary,
+                      side: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
                     ),
-                    label: const Text(
-                      'Verify with DigiLocker',
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DigiLockerAuthScreen()),
                     ),
+                    icon: const Icon(Icons.verified_user_outlined),
+                    label: const Text('Verify with DigiLocker'),
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.sm),
 
-                // Sign up link
                 TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SignupScreen()),
-                    );
-                  },
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignupScreen())),
+                  style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
                   child: const Text("Don't have an account? Sign up"),
                 ),
               ],
@@ -271,9 +221,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
-// Real authentication — DigiLocker/Aadhaar offline XML
-// verification — comes next.
-//
-// For now, this screen validates the email and password
-// before allowing the user to proceed.

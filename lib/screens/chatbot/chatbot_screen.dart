@@ -4,10 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/chat_message.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/chat_input.dart';
-
 import '../../backend/chatbot/chatbot_backend.dart';
 import '../../core/network/api_client.dart';
 import 'chat_history_repository.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_spacing.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -116,7 +117,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           reply.isNotEmpty ? reply : 'Sorry, I could not generate a response.';
 
       if (!mounted) return;
-
       setState(() {
         _messages.add(ChatMessage(text: replyText, isUser: false));
       });
@@ -131,45 +131,23 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       }
     } on ApiException catch (e) {
       if (!mounted) return;
-
       setState(() {
-        _messages.add(
-          ChatMessage(
-            text: 'Sorry, I could not connect to Sakhi right now. '
-                '${e.message}',
-            isUser: false,
-          ),
-        );
+        _messages.add(ChatMessage(text: 'Sorry, I could not connect to Sakhi right now. ${e.message}', isUser: false));
       });
     } catch (e) {
       if (!mounted) return;
-
       setState(() {
-        _messages.add(
-          ChatMessage(
-            text: 'Unable to connect to the Sakhi server. '
-                'Please check that the backend is running.',
-            isUser: false,
-          ),
-        );
+        _messages.add(ChatMessage(text: 'Unable to connect to the Sakhi server. Please check that the backend is running.', isUser: false));
       });
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _sendSuggestion(String suggestion) {
-    _sendMessage(suggestion);
-  }
+  void _sendSuggestion(String suggestion) => _sendMessage(suggestion);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     if (_isInitializing) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -177,6 +155,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         titleSpacing: 16,
         title: Row(
@@ -184,36 +163,20 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.shield_outlined,
-                color: theme.colorScheme.primary,
-              ),
+              decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+              child: const Icon(Icons.shield_outlined, color: Colors.white),
             ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Sakhi',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'Your safety companion',
-                  style: theme.textTheme.bodySmall,
-                ),
+                Text('Sakhi AI Planner', style: Theme.of(context).textTheme.titleMedium),
+                Text('Your safety companion', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
               ],
             ),
           ],
         ),
       ),
-
       body: Column(
         children: [
           Expanded(
@@ -224,41 +187,20 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 if (index == _messages.length && _isLoading) {
                   return const _TypingIndicator();
                 }
-
-                return ChatBubble(
-                  message: _messages[index],
-                );
+                return ChatBubble(message: _messages[index]);
               },
             ),
           ),
-
-          if (_messages.length == 1 && !_isLoading)
-            _SuggestionSection(
-              onSuggestionTap: _sendSuggestion,
-            ),
-
+          if (_messages.length == 1 && !_isLoading) _SuggestionSection(onSuggestionTap: _sendSuggestion),
           if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                bottom: 4,
-              ),
+            Padding(
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 4),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  'Sakhi is thinking...',
-                  style: TextStyle(
-                    fontSize: 12,
-                  ),
-                ),
+                child: Text('Sakhi is thinking...', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
               ),
             ),
-
-          ChatInput(
-            onSend: _sendMessage,
-            enabled: !_isLoading,
-          ),
+          ChatInput(onSend: _sendMessage, enabled: !_isLoading),
         ],
       ),
     );
@@ -271,15 +213,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
 class _SuggestionSection extends StatelessWidget {
   final Function(String) onSuggestionTap;
-
-  const _SuggestionSection({
-    required this.onSuggestionTap,
-  });
+  const _SuggestionSection({required this.onSuggestionTap});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final suggestions = [
       'How can I stay safe while travelling alone?',
       'How does Sakhi help me during a journey?',
@@ -293,12 +230,9 @@ class _SuggestionSection extends StatelessWidget {
         children: [
           Text(
             'You can ask me about',
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.6, color: AppTheme.textSecondary),
           ),
-          const SizedBox(height: 8),
-
+          const SizedBox(height: AppSpacing.sm),
           SizedBox(
             height: 42,
             child: ListView.separated(
@@ -306,12 +240,16 @@ class _SuggestionSection extends StatelessWidget {
               itemCount: suggestions.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                return ActionChip(
-                  label: Text(
-                    suggestions[index],
-                    overflow: TextOverflow.ellipsis,
+                return OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.textPrimary,
+                    backgroundColor: Colors.white,
+                    side: BorderSide(color: Colors.black.withOpacity(0.1)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusPill)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                   ),
                   onPressed: () => onSuggestionTap(suggestions[index]),
+                  child: Text(suggestions[index], overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
                 );
               },
             ),
@@ -331,43 +269,25 @@ class _TypingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.shield_outlined,
-              color: theme.colorScheme.primary,
-              size: 20,
-            ),
+            decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.black.withOpacity(0.06)),
             ),
-            child: const SizedBox(
-              width: 28,
-              height: 16,
-              child: _ThreeDots(),
-            ),
+            child: const SizedBox(width: 28, height: 16, child: _ThreeDots()),
           ),
         ],
       ),
@@ -382,18 +302,13 @@ class _ThreeDots extends StatefulWidget {
   State<_ThreeDots> createState() => _ThreeDotsState();
 }
 
-class _ThreeDotsState extends State<_ThreeDots>
-    with SingleTickerProviderStateMixin {
+class _ThreeDotsState extends State<_ThreeDots> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat();
   }
 
   @override
@@ -408,23 +323,17 @@ class _ThreeDotsState extends State<_ThreeDots>
       animation: _controller,
       builder: (context, child) {
         final value = _controller.value;
-
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(3, (index) {
             final offset = ((value + index * 0.2) % 1.0);
-
             final opacity = 0.3 + (offset < 0.5 ? offset : 1 - offset);
-
             return Opacity(
               opacity: opacity.clamp(0.3, 1.0),
               child: Container(
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  shape: BoxShape.circle,
-                ),
+                decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
               ),
             );
           }),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/state/sos_store.dart';
+import '../core/theme/app_theme.dart';
 import '../services/sos_service.dart';
 
 class SosButton extends StatefulWidget {
@@ -18,7 +19,7 @@ class _SosButtonState extends State<SosButton> {
 
   void _startHold() async {
     setState(() => _holding = true);
-    final steps = 30;
+    const steps = 30;
     for (int i = 0; i <= steps; i++) {
       if (!_holding) return;
       await Future.delayed(_holdDuration ~/ steps);
@@ -64,7 +65,7 @@ class _SosButtonState extends State<SosButton> {
         final active = SosStore.instance.sosActive;
         if (active) {
           return FloatingActionButton.extended(
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.safetyRed,
             onPressed: () async => await _sosService.resolve(),
             icon: const Icon(Icons.check),
             label: const Text('Resolve SOS'),
@@ -79,20 +80,16 @@ class _SosButtonState extends State<SosButton> {
             height: 64,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.red.shade600,
+              color: AppTheme.accent,
               boxShadow: _holding
-                  ? [BoxShadow(color: Colors.red.withOpacity(0.5), blurRadius: 12)]
-                  : [],
+                  ? [BoxShadow(color: AppTheme.accent.withOpacity(0.5), blurRadius: 12)]
+                  : [BoxShadow(color: AppTheme.accent.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))],
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
                 if (_holding)
-                  CircularProgressIndicator(
-                    value: _holdProgress,
-                    color: Colors.white,
-                    strokeWidth: 3,
-                  ),
+                  CircularProgressIndicator(value: _holdProgress, color: Colors.white, strokeWidth: 3),
                 const Icon(Icons.sos, color: Colors.white, size: 28),
               ],
             ),

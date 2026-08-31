@@ -9,22 +9,11 @@ import '../screens/drawer_stub_screens.dart';
 import '../core/state/auth_store.dart';
 import '../core/state/sos_store.dart';
 import '../core/state/evidence_store.dart';
+import '../core/theme/app_theme.dart';
+import '../core/theme/app_spacing.dart';
 import '../screens/auth/login_screen.dart';
 import 'sos_button.dart';
 
-/// Replaces BottomNavShell. A side drawer scales better than bottom tabs
-/// once you're past ~4 sections — this app has 9.
-///
-/// IndexedStack keeps each screen's state alive when switching sections
-/// (e.g. Search's filters don't reset when you check the Chatbot and
-/// come back), same tradeoff the old BottomNavShell made.
-///
-/// SosButton lives here as the Scaffold's floatingActionButton, so it's
-/// visible on every drawer section without being duplicated per-screen.
-/// Note: screens pushed on top via Navigator.push (destination details,
-/// map screen, evidence/report screens) render their own Scaffold and
-/// won't show this FAB — flag if you want SOS visible there too, that
-/// needs a different pattern (MaterialApp-level overlay).
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -38,10 +27,6 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
-    // Both stores persist via SharedPreferences but start empty in memory
-    // until loaded — without this, SosStore.contacts is [] (no one to
-    // text) and EvidenceStore.items is [] (evidence screen looks empty)
-    // even if data was saved in a previous session.
     SosStore.instance.loadContacts();
     EvidenceStore.instance.load();
   }
@@ -73,46 +58,63 @@ class _AppShellState extends State<AppShell> {
   ];
 
   void _select(int i) {
-    Navigator.pop(context); // close drawer
+    Navigator.pop(context);
     setState(() => _index = i);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_drawerItems[_index].label)),
+      appBar: AppBar(
+        title: Text(
+          _drawerItems[_index].label,
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
+      ),
       drawer: Drawer(
+        backgroundColor: AppTheme.background,
         child: SafeArea(
           child: Column(
             children: [
-              _DrawerHeader(),
+              const _DrawerHeader(),
               Expanded(
                 child: ListView.builder(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                   itemCount: _drawerItems.length,
                   itemBuilder: (context, i) {
                     final item = _drawerItems[i];
                     final selected = i == _index;
-                    return ListTile(
-                      leading: Icon(selected ? item.selectedIcon : item.icon,
-                          color: selected ? Theme.of(context).colorScheme.primary : null),
-                      title: Text(
-                        item.label,
-                        style: TextStyle(
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                          color: selected ? Theme.of(context).colorScheme.primary : null,
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
+                      child: Material(
+                        color: selected ? AppTheme.primary.withOpacity(0.08) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        child: ListTile(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                          ),
+                          leading: Icon(
+                            selected ? item.selectedIcon : item.icon,
+                            color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                          ),
+                          title: Text(
+                            item.label,
+                            style: TextStyle(
+                              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                              color: selected ? AppTheme.primary : AppTheme.textPrimary,
+                            ),
+                          ),
+                          onTap: () => _select(i),
                         ),
                       ),
-                      selected: selected,
-                      onTap: () => _select(i),
                     );
                   },
                 ),
               ),
-              const Divider(height: 1),
+              Divider(height: 1, color: Colors.black.withOpacity(0.06)),
               ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red),
-                title: const Text('Log out', style: TextStyle(color: Colors.red)),
+                leading: const Icon(Icons.logout, color: AppTheme.safetyRed),
+                title: const Text('Log out', style: TextStyle(color: AppTheme.safetyRed, fontWeight: FontWeight.w500)),
                 onTap: () {
                   AuthStore.instance.reset();
                   Navigator.pushAndRemoveUntil(
@@ -122,6 +124,7 @@ class _AppShellState extends State<AppShell> {
                   );
                 },
               ),
+              const SizedBox(height: AppSpacing.sm),
             ],
           ),
         ),
@@ -141,6 +144,8 @@ class _DrawerItem {
 }
 
 class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader();
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -149,28 +154,55 @@ class _DrawerHeader extends StatelessWidget {
         final verified = AuthStore.instance.isVerified;
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.xl, AppSpacing.lg, AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withOpacity(0.06),
+            border: Border(bottom: BorderSide(color: Colors.black.withOpacity(0.06))),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.shield, size: 40, color: Colors.deepPurple),
-              const SizedBox(height: 10),
-              const Text('Sakhi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(
-                    verified ? Icons.verified_user : Icons.gpp_maybe_outlined,
-                    size: 14,
-                    color: verified ? Colors.green : Colors.orange,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    verified ? 'Verified' : 'Not verified',
-                    style: TextStyle(fontSize: 12, color: verified ? Colors.green : Colors.orange),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                ),
+                child: const Icon(Icons.shield, size: 24, color: Colors.white),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Sakhi',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (verified ? AppTheme.safetyGreen : AppTheme.accent).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      verified ? Icons.verified_user : Icons.gpp_maybe_outlined,
+                      size: 13,
+                      color: verified ? AppTheme.safetyGreen : AppTheme.accent,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      verified ? 'Verified' : 'Not verified',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: verified ? AppTheme.safetyGreen : AppTheme.accent,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
