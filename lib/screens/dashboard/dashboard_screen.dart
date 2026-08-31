@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/state/auth_store.dart';
 import '../../models/user_profile.dart';
+import '../../services/evidence_service.dart';
+import '../report/submit_report_screen.dart';
+import '../evidence/evidence_screen.dart';
 
 /// Landing screen after login: welcome + at-a-glance usage stats.
 /// Stats are mocked until a backend/analytics endpoint exists —
@@ -15,12 +18,54 @@ class DashboardScreen extends StatelessWidget {
     _StatItem(icon: Icons.watch_outlined, label: 'Pendant status', value: 'Not paired'),
   ];
 
+  Future<void> _captureEvidence(BuildContext context) async {
+    try {
+      final evidence = await EvidenceService().capturePhoto();
+      if (evidence == null) return; // user cancelled the camera
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Evidence captured and saved'),
+          action: SnackBarAction(
+            label: 'View',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EvidenceScreen()),
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not capture evidence: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = mockUserProfile;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sakhi')),
+      appBar: AppBar(
+        title: const Text('Sakhi'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.report_problem_outlined),
+            tooltip: 'Report a safety concern',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SubmitReportScreen()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.camera_alt_outlined),
+            tooltip: 'Capture evidence',
+            onPressed: () => _captureEvidence(context),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -49,10 +94,6 @@ class DashboardScreen extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            // Was 1.5 (too short for icon + value + a 2-line label like
-            // "Avg. safety score"), which overflowed by ~8px. 1.05 gives
-            // each cell enough height; _StatCard also caps the label at
-            // 2 lines with ellipsis as a safety net for any longer text.
             childAspectRatio: 1.05,
             children: _mockStats.map((s) => _StatCard(item: s)).toList(),
           ),

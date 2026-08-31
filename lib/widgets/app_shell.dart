@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/search/search_screen.dart';
+import '../screens/chatbot/chatbot_screen.dart';
 import '../screens/itinerary/itinerary_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/drawer_stub_screens.dart';
 import '../core/state/auth_store.dart';
+import '../core/state/sos_store.dart';
+import '../core/state/evidence_store.dart';
 import '../screens/auth/login_screen.dart';
+import 'sos_button.dart';
 
 /// Replaces BottomNavShell. A side drawer scales better than bottom tabs
 /// once you're past ~4 sections — this app has 9.
@@ -14,6 +18,13 @@ import '../screens/auth/login_screen.dart';
 /// IndexedStack keeps each screen's state alive when switching sections
 /// (e.g. Search's filters don't reset when you check the Chatbot and
 /// come back), same tradeoff the old BottomNavShell made.
+///
+/// SosButton lives here as the Scaffold's floatingActionButton, so it's
+/// visible on every drawer section without being duplicated per-screen.
+/// Note: screens pushed on top via Navigator.push (destination details,
+/// map screen, evidence/report screens) render their own Scaffold and
+/// won't show this FAB — flag if you want SOS visible there too, that
+/// needs a different pattern (MaterialApp-level overlay).
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -23,6 +34,17 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Both stores persist via SharedPreferences but start empty in memory
+    // until loaded — without this, SosStore.contacts is [] (no one to
+    // text) and EvidenceStore.items is [] (evidence screen looks empty)
+    // even if data was saved in a previous session.
+    SosStore.instance.loadContacts();
+    EvidenceStore.instance.load();
+  }
 
   static const _screens = [
     DashboardScreen(),
@@ -105,6 +127,8 @@ class _AppShellState extends State<AppShell> {
         ),
       ),
       body: IndexedStack(index: _index, children: _screens),
+      floatingActionButton: const SosButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

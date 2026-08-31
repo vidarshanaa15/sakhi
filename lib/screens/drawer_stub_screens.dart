@@ -2,22 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/empty_state.dart';
 
 /// Placeholder screens for sidebar sections not built out yet.
-/// Each uses your existing EmptyState widget so they're visually
-/// consistent with Search/Itinerary's empty states. Replace the body
-/// of each as that feature gets built — the AppShell drawer already
-/// routes to these, so nothing else needs to change when you do.
-
-class ChatbotScreen extends StatelessWidget {
-  const ChatbotScreen({super.key});
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Itinerary Chatbot')),
-    body: const EmptyState(
-      icon: Icons.chat_bubble_outline,
-      message: 'Chatbot coming next.\nWill suggest hidden gems and plan itineraries based on your preferences.',
-    ),
-  );
-}
+/// Chatbot moved out of here — it now has a real implementation at
+/// screens/chatbot/chatbot_screen.dart, imported directly by AppShell.
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
