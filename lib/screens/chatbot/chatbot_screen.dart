@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/chat_message.dart';
 import 'widgets/chat_bubble.dart';
@@ -6,6 +7,7 @@ import 'widgets/chat_input.dart';
 
 import '../../backend/chatbot/chatbot_backend.dart';
 import '../../core/network/api_client.dart';
+import 'chat_history_repository.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -17,51 +19,116 @@ class ChatbotScreen extends StatefulWidget {
 class _ChatbotScreenState extends State<ChatbotScreen> {
   final List<ChatMessage> _messages = [];
   final ChatbotBackend _chatbotBackend = ChatbotBackend();
+  final ChatHistoryRepository _historyRepo = ChatHistoryRepository();
 
   bool _isLoading = false;
+  bool _isInitializing = true;
+  String? _sessionId;
+
+  static const _greeting =
+      "Hi, I'm Sakhi. I'm here to help you travel more safely. How can I help you?";
 
   @override
   void initState() {
     super.initState();
+    _initChat();
+  }
 
-    _messages.add(
-      ChatMessage(
-        text:
-            "Hi, I'm Sakhi. I'm here to help you travel more safely. How can I help you?",
-        isUser: false,
-      ),
-    );
+  Future<void> _initChat() async {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user == null) {
+      // No session — fall back to in-memory greeting only.
+      setState(() {
+        _messages.add(ChatMessage(text: _greeting, isUser: false));
+        _isInitializing = false;
+      });
+      return;
+    }
+
+    try {
+      final existingSessionId =
+          await _historyRepo.getLatestSessionId(user.id);
+
+      if (existingSessionId != null) {
+        final history = await _historyRepo.loadMessages(existingSessionId);
+
+        if (!mounted) return;
+        setState(() {
+          _sessionId = existingSessionId;
+          if (history.isNotEmpty) {
+            _messages.addAll(history);
+          } else {
+            _messages.add(ChatMessage(text: _greeting, isUser: false));
+          }
+          _isInitializing = false;
+        });
+      } else {
+        final newSessionId = await _historyRepo.createSession(user.id);
+
+        if (!mounted) return;
+        setState(() {
+          _sessionId = newSessionId;
+          _messages.add(ChatMessage(text: _greeting, isUser: false));
+          _isInitializing = false;
+        });
+
+        // Persist the initial greeting so it's part of the saved history.
+        await _historyRepo.saveMessage(
+          sessionId: newSessionId,
+          userId: user.id,
+          text: _greeting,
+          isUser: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Failed to load chat history: $e');
+      if (!mounted) return;
+      setState(() {
+        _messages.add(ChatMessage(text: _greeting, isUser: false));
+        _isInitializing = false;
+      });
+    }
   }
 
   Future<void> _sendMessage(String text) async {
     if (_isLoading || text.trim().isEmpty) return;
 
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          text: text,
-          isUser: true,
-        ),
-      );
+    final user = Supabase.instance.client.auth.currentUser;
 
+    setState(() {
+      _messages.add(ChatMessage(text: text, isUser: true));
       _isLoading = true;
     });
 
+    if (user != null && _sessionId != null) {
+      await _historyRepo.saveMessage(
+        sessionId: _sessionId!,
+        userId: user.id,
+        text: text,
+        isUser: true,
+      );
+    }
+
     try {
       final reply = await _chatbotBackend.sendMessage(text);
+      final replyText =
+          reply.isNotEmpty ? reply : 'Sorry, I could not generate a response.';
 
       if (!mounted) return;
 
       setState(() {
-        _messages.add(
-          ChatMessage(
-            text: reply.isNotEmpty
-                ? reply
-                : 'Sorry, I could not generate a response.',
-            isUser: false,
-          ),
-        );
+        _messages.add(ChatMessage(text: replyText, isUser: false));
       });
+
+      if (user != null && _sessionId != null) {
+        await _historyRepo.saveMessage(
+          sessionId: _sessionId!,
+          userId: user.id,
+          text: replyText,
+          isUser: false,
+        );
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
 
@@ -102,6 +169,12 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (_isInitializing) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -146,8 +219,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(top: 12),
-              itemCount: _messages.length +
-                  (_isLoading ? 1 : 0),
+              itemCount: _messages.length + (_isLoading ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index == _messages.length && _isLoading) {
                   return const _TypingIndicator();
@@ -193,7 +265,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 }
 
-
 // ---------------------------------------------------------
 // Suggestion buttons
 // ---------------------------------------------------------
@@ -233,16 +304,14 @@ class _SuggestionSection extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: suggestions.length,
-              separatorBuilder: (_, __) =>
-                  const SizedBox(width: 8),
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 return ActionChip(
                   label: Text(
                     suggestions[index],
                     overflow: TextOverflow.ellipsis,
                   ),
-                  onPressed: () =>
-                      onSuggestionTap(suggestions[index]),
+                  onPressed: () => onSuggestionTap(suggestions[index]),
                 );
               },
             ),
@@ -252,7 +321,6 @@ class _SuggestionSection extends StatelessWidget {
     );
   }
 }
-
 
 // ---------------------------------------------------------
 // Typing indicator
@@ -307,7 +375,6 @@ class _TypingIndicator extends StatelessWidget {
   }
 }
 
-
 class _ThreeDots extends StatefulWidget {
   const _ThreeDots();
 
@@ -345,11 +412,9 @@ class _ThreeDotsState extends State<_ThreeDots>
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(3, (index) {
-            final offset =
-                ((value + index * 0.2) % 1.0);
+            final offset = ((value + index * 0.2) % 1.0);
 
-            final opacity =
-                0.3 + (offset < 0.5 ? offset : 1 - offset);
+            final opacity = 0.3 + (offset < 0.5 ? offset : 1 - offset);
 
             return Opacity(
               opacity: opacity.clamp(0.3, 1.0),
@@ -357,9 +422,7 @@ class _ThreeDotsState extends State<_ThreeDots>
                 width: 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   shape: BoxShape.circle,
                 ),
               ),
