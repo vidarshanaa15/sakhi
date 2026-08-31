@@ -48,6 +48,8 @@ class _NearbyReportsScreenState extends State<NearbyReportsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Community Reports')),
       floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color.fromRGBO(59, 26, 50, 1),
+        foregroundColor: const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
         onPressed: () async {
           await Navigator.push(context,
               MaterialPageRoute(builder: (_) => SubmitReportScreen()));

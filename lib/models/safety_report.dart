@@ -1,6 +1,6 @@
 class SafetyReport {
   final String id;
-  final String category; // e.g. 'Harassment', 'Poor lighting', 'Unsafe area'
+  final String category;
   final String description;
   final double lat;
   final double lng;
@@ -21,15 +21,17 @@ class SafetyReport {
         'description': description,
         'lat': lat,
         'lng': lng,
-        'timestamp': timestamp.toIso8601String(),
+        'reported_at': timestamp.toIso8601String(), // match DB column name
       };
 
   factory SafetyReport.fromJson(Map<String, dynamic> json) => SafetyReport(
         id: json['id'].toString(),
-        category: json['category'],
-        description: json['description'],
+        category: json['category'] as String? ?? '',
+        description: json['description'] as String? ?? '',
         lat: (json['lat'] as num).toDouble(),
         lng: (json['lng'] as num).toDouble(),
-        timestamp: DateTime.parse(json['timestamp']),
+        timestamp: json['reported_at'] != null
+            ? DateTime.parse(json['reported_at'] as String)
+            : DateTime.now(),
       );
 }

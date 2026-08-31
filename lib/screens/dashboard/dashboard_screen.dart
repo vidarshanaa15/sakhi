@@ -4,6 +4,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_profile.dart';
 import '../../services/evidence_service.dart';
+import '../report/nearby_reports_screen.dart';
 import '../report/submit_report_screen.dart';
 import '../evidence/evidence_screen.dart';
 
@@ -86,7 +87,7 @@ class DashboardScreen extends StatelessWidget {
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const SubmitReportScreen(),
+                builder: (_) => const NearbyReportsScreen(),
               ),
             ),
           ),
