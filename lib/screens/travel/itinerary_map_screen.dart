@@ -4,6 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/state/itinerary_store.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/route_leg_group.dart';
 import '../../services/itinerary_route_service.dart';
 import '../../services/location_service.dart';
@@ -14,20 +16,15 @@ class ItineraryMapScreen extends StatefulWidget {
   const ItineraryMapScreen({super.key});
 
   @override
-  State<ItineraryMapScreen> createState() =>
-      _ItineraryMapScreenState();
+  State<ItineraryMapScreen> createState() => _ItineraryMapScreenState();
 }
 
-class _ItineraryMapScreenState
-    extends State<ItineraryMapScreen> {
-  final LocationService _locationService =
-      LocationService();
+class _ItineraryMapScreenState extends State<ItineraryMapScreen> {
+  final LocationService _locationService = LocationService();
 
-  final ItineraryRouteService _routeService =
-      ItineraryRouteService();
+  final ItineraryRouteService _routeService = ItineraryRouteService();
 
-  final MapController _mapController =
-      MapController();
+  final MapController _mapController = MapController();
 
   LatLng? _currentLocation;
 
@@ -46,7 +43,7 @@ class _ItineraryMapScreenState
 
   Future<void> _loadTrip() async {
     final Position? position =
-        await _locationService.getCurrentLocation();
+    await _locationService.getCurrentLocation();
 
     if (!mounted) return;
 
@@ -119,21 +116,21 @@ class _ItineraryMapScreenState
   void _toggleExpanded(int groupIndex) {
     setState(() {
       _expandedGroupIndex =
-          _expandedGroupIndex == groupIndex ? null : groupIndex;
+      _expandedGroupIndex == groupIndex ? null : groupIndex;
     });
   }
 
   double get _totalDistance {
     return _legGroups.fold(
       0,
-      (total, group) => total + group.selectedLeg.distanceMeters,
+          (total, group) => total + group.selectedLeg.distanceMeters,
     );
   }
 
   int get _totalDuration {
     return _legGroups.fold(
       0,
-      (total, group) => total + group.selectedLeg.durationMinutes,
+          (total, group) => total + group.selectedLeg.durationMinutes,
     );
   }
 
@@ -148,22 +145,32 @@ class _ItineraryMapScreenState
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (_loading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        backgroundColor: AppTheme.background,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.primary,
+          ),
+        ),
       );
     }
 
     if (_currentLocation == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Sakhi Trip')),
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          title: const Text('Sakhi Trip'),
+          backgroundColor: AppTheme.background,
+        ),
         body: const Center(
           child: Text(
             'Unable to access your location.\n'
-            'Please enable location permissions.',
+                'Please enable location permissions.',
             textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+            ),
           ),
         ),
       );
@@ -171,16 +178,27 @@ class _ItineraryMapScreenState
 
     if (ItineraryStore.instance.items.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Sakhi Trip')),
-        body: const Center(child: Text('Your itinerary is empty.')),
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          title: const Text('Sakhi Trip'),
+          backgroundColor: AppTheme.background,
+        ),
+        body: const Center(
+          child: Text(
+            'Your itinerary is empty.',
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ),
       );
     }
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLowest,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Sakhi Trip'),
-        elevation: 0,
+        backgroundColor: AppTheme.background,
       ),
       body: Stack(
         children: [
@@ -193,7 +211,7 @@ class _ItineraryMapScreenState
             children: [
               TileLayer(
                 urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.sakhi_app',
               ),
 
@@ -201,18 +219,21 @@ class _ItineraryMapScreenState
                 PolylineLayer(
                   polylines: [
                     for (final group in _legGroups)
-                      for (int i = 0; i < group.alternatives.length; i++)
+                      for (int i = 0;
+                      i < group.alternatives.length;
+                      i++)
                         if (i != group.selectedIndex)
                           Polyline(
                             points: group.alternatives[i].points,
                             strokeWidth: 3,
-                            color: colorScheme.outline.withValues(alpha: 0.35),
+                            color: AppTheme.textSecondary
+                                .withOpacity(0.35),
                           ),
                     for (final group in _legGroups)
                       Polyline(
                         points: group.selectedLeg.points,
                         strokeWidth: 5,
-                        color: colorScheme.primary,
+                        color: AppTheme.primary,
                       ),
                   ],
                 ),
@@ -225,12 +246,15 @@ class _ItineraryMapScreenState
                     height: 46,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: colorScheme.primary,
+                        color: AppTheme.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 3,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: Colors.black.withOpacity(0.2),
                             blurRadius: 6,
                           ),
                         ],
@@ -256,21 +280,21 @@ class _ItineraryMapScreenState
                           color: Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: colorScheme.primary,
+                            color: AppTheme.primary,
                             width: 2,
                           ),
                           boxShadow: [
                             BoxShadow(
                               blurRadius: 4,
-                              color: Colors.black.withValues(alpha: 0.2),
+                              color: Colors.black.withOpacity(0.2),
                             ),
                           ],
                         ),
                         child: Text(
                           '${index + 1}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontWeight: FontWeight.w800,
-                            color: colorScheme.primary,
+                            color: AppTheme.primary,
                           ),
                         ),
                       ),
@@ -282,101 +306,127 @@ class _ItineraryMapScreenState
           ),
 
           Positioned(
-            left: 16,
-            right: 16,
-            bottom: 24,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
+            bottom: AppSpacing.lg,
             child: Container(
               decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(22),
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(
+                  AppSpacing.radiusLg,
+                ),
+                border: Border.all(
+                  color: Colors.black.withOpacity(0.06),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withOpacity(0.10),
                     blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (_loadingRoutes)
                     const Column(
                       children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 12),
-                        Text('Building your trip route...'),
+                        CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
+                        SizedBox(height: AppSpacing.sm + 4),
+                        Text(
+                          'Building your trip route...',
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
                       ],
                     )
                   else if (_legGroups.isEmpty)
                     const Text(
                       'Could not create routes for this itinerary.',
                       textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                      ),
                     )
                   else ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _TripStat(
-                          icon: Icons.flag_rounded,
-                          label: 'Stops',
-                          value: '${_legGroups.length}',
-                        ),
-                        _TripStat(
-                          icon: Icons.straighten_rounded,
-                          label: 'Distance',
-                          value:
-                              '${(_totalDistance / 1000).toStringAsFixed(1)} km',
-                        ),
-                        _TripStat(
-                          icon: Icons.schedule_rounded,
-                          label: 'Travel time',
-                          value: _formatDuration(_totalDuration),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Divider(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
-                    const SizedBox(height: 6),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 280),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _legGroups.length,
-                        itemBuilder: (context, index) {
-                          final group = _legGroups[index];
-                          final leg = group.selectedLeg;
-                          final expanded = _expandedGroupIndex == index;
-
-                          return _LegCard(
-                            index: index,
-                            leg: leg,
-                            group: group,
-                            expanded: expanded,
-                            onTap: () => _toggleExpanded(index),
-                            onSelectAlternative: (altIndex) =>
-                                _selectAlternative(index, altIndex),
-                            formatDuration: _formatDuration,
-                          );
-                        },
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _TripStat(
+                            icon: Icons.flag_outlined,
+                            label: 'Stops',
+                            value: '${_legGroups.length}',
+                          ),
+                          _TripStat(
+                            icon: Icons.straighten_outlined,
+                            label: 'Distance',
+                            value:
+                            '${(_totalDistance / 1000).toStringAsFixed(1)} km',
+                          ),
+                          _TripStat(
+                            icon: Icons.schedule_outlined,
+                            label: 'Travel time',
+                            value: _formatDuration(_totalDuration),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: AppSpacing.sm + 2),
+                      Divider(
+                        color: Colors.black.withOpacity(0.06),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxHeight: 280,
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _legGroups.length,
+                          itemBuilder: (context, index) {
+                            final group = _legGroups[index];
+                            final leg = group.selectedLeg;
+                            final expanded =
+                                _expandedGroupIndex == index;
+
+                            return _LegCard(
+                              index: index,
+                              leg: leg,
+                              group: group,
+                              expanded: expanded,
+                              onTap: () => _toggleExpanded(index),
+                              onSelectAlternative: (altIndex) =>
+                                  _selectAlternative(
+                                    index,
+                                    altIndex,
+                                  ),
+                              formatDuration: _formatDuration,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                 ],
               ),
             ),
           ),
 
           Positioned(
-            right: 16,
+            right: AppSpacing.md,
             bottom: 260,
             child: FloatingActionButton(
               mini: true,
-              backgroundColor: colorScheme.surface,
-              foregroundColor: colorScheme.primary,
+              backgroundColor: AppTheme.surface,
+              foregroundColor: AppTheme.primary,
+              elevation: 3,
               onPressed: _goToCurrentLocation,
-              child: const Icon(Icons.my_location_rounded),
+              child: const Icon(
+                Icons.my_location_rounded,
+              ),
             ),
           ),
         ],
@@ -398,25 +448,35 @@ class _TripStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Column(
       children: [
-        Icon(icon, size: 18, color: colorScheme.primary),
-        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withOpacity(0.07),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 17,
+            color: AppTheme.primary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs + 1),
         Text(
           value,
           style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+            color: AppTheme.textPrimary,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11.5,
-            color: colorScheme.onSurfaceVariant,
+          style: const TextStyle(
+            fontSize: 10.5,
+            color: AppTheme.textSecondary,
           ),
         ),
       ],
@@ -445,26 +505,31 @@ class _LegCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final hasAlternatives = group.alternatives.length > 1;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(
+        bottom: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(
+          AppSpacing.radiusMd,
+        ),
         border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: Colors.black.withOpacity(0.06),
         ),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(
+          AppSpacing.radiusMd,
+        ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: hasAlternatives ? onTap : null,
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.sm + 2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -475,24 +540,29 @@ class _LegCard extends StatelessWidget {
                       height: 30,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.12),
+                        color: AppTheme.primary.withOpacity(0.08),
                         shape: BoxShape.circle,
                       ),
                       child: Text(
                         '${index + 1}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.primary,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primary,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpacing.sm + 2),
                     Expanded(
                       child: Text(
                         '${leg.startName} → ${leg.endName}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                          fontSize: 13.5,
+                        ),
                       ),
                     ),
                     if (hasAlternatives)
@@ -500,32 +570,38 @@ class _LegCard extends StatelessWidget {
                         expanded
                             ? Icons.expand_less_rounded
                             : Icons.expand_more_rounded,
-                        color: colorScheme.onSurfaceVariant,
+                        color: AppTheme.textSecondary,
                       ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
-                    Icon(Icons.straighten_rounded,
-                        size: 13, color: colorScheme.onSurfaceVariant),
+                    const Icon(
+                      Icons.straighten_outlined,
+                      size: 13,
+                      color: AppTheme.textSecondary,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       '${leg.distanceKm.toStringAsFixed(1)} km',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: colorScheme.onSurfaceVariant,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppTheme.textSecondary,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Icon(Icons.schedule_rounded,
-                        size: 13, color: colorScheme.onSurfaceVariant),
+                    const SizedBox(width: AppSpacing.sm),
+                    const Icon(
+                      Icons.schedule_outlined,
+                      size: 13,
+                      color: AppTheme.textSecondary,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       formatDuration(leg.durationMinutes),
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: colorScheme.onSurfaceVariant,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppTheme.textSecondary,
                       ),
                     ),
                     const Spacer(),
@@ -533,39 +609,47 @@ class _LegCard extends StatelessWidget {
                       SafetyPill(
                         score: leg.safetyScore,
                         label:
-                            '${leg.safetyScore!.toStringAsFixed(1)}/10 • ${leg.safetyLevel}',
+                        '${leg.safetyScore!.toStringAsFixed(1)}/10 • ${leg.safetyLevel}',
                       ),
                   ],
                 ),
                 if (expanded && hasAlternatives) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.sm + 2),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: group.alternatives.asMap().entries.map<Widget>((altEntry) {
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: group.alternatives
+                        .asMap()
+                        .entries
+                        .map<Widget>((altEntry) {
                       final altIndex = altEntry.key;
                       final alt = altEntry.value;
-                      final selected = altIndex == group.selectedIndex;
+                      final selected =
+                          altIndex == group.selectedIndex;
 
                       return InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () => onSelectAlternative(altIndex),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusSm,
+                        ),
+                        onTap: () =>
+                            onSelectAlternative(altIndex),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 8,
+                            horizontal: AppSpacing.sm + 2,
+                            vertical: AppSpacing.sm,
                           ),
                           decoration: BoxDecoration(
                             color: selected
-                                ? colorScheme.primary.withValues(alpha: 0.1)
-                                : colorScheme.surface,
-                            borderRadius: BorderRadius.circular(12),
+                                ? AppTheme.primary.withOpacity(0.08)
+                                : AppTheme.surface,
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.radiusSm,
+                            ),
                             border: Border.all(
                               color: selected
-                                  ? colorScheme.primary
-                                  : colorScheme.outlineVariant
-                                      .withValues(alpha: 0.6),
-                              width: selected ? 1.6 : 1,
+                                  ? AppTheme.primary
+                                  : Colors.black.withOpacity(0.08),
+                              width: selected ? 1.4 : 1,
                             ),
                           ),
                           child: Row(
@@ -577,24 +661,26 @@ class _LegCard extends StatelessWidget {
                                     : Icons.circle_outlined,
                                 size: 14,
                                 color: selected
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurfaceVariant,
+                                    ? AppTheme.primary
+                                    : AppTheme.textSecondary,
                               ),
                               const SizedBox(width: 6),
                               Text(
                                 'Route ${altIndex + 1} • '
-                                '${alt.distanceKm.toStringAsFixed(1)} km',
+                                    '${alt.distanceKm.toStringAsFixed(1)} km',
                                 style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
                                   color: selected
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurface,
+                                      ? AppTheme.primary
+                                      : AppTheme.textPrimary,
                                 ),
                               ),
                               if (alt.safetyScore != null) ...[
                                 const SizedBox(width: 6),
-                                SafetyPill(score: alt.safetyScore),
+                                SafetyPill(
+                                  score: alt.safetyScore,
+                                ),
                               ],
                             ],
                           ),

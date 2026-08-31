@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/safety_report.dart';
 import '../../services/location_service.dart';
 import '../../services/safety_report_service.dart';
@@ -46,54 +48,140 @@ class _NearbyReportsScreenState extends State<NearbyReportsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Community Reports')),
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text('Community Reports'),
+        backgroundColor: AppTheme.background,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color.fromRGBO(59, 26, 50, 1),
         foregroundColor: const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
         onPressed: () async {
-          await Navigator.push(context,
-              MaterialPageRoute(builder: (_) => SubmitReportScreen()));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const SubmitReportScreen(),
+            ),
+          );
           _load();
         },
-        icon: const Icon(Icons.add_alert),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_alert_outlined),
         label: const Text('Report'),
       ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.primary,
+          ),
+        )
             : _error != null
-                ? ListView(children: [
-                    Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text('Could not load reports: $_error'),
-                    )
-                  ])
-                : _reports.isEmpty
-                    ? ListView(children: const [
-                        Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text('No nearby reports yet'),
-                        )
-                      ])
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _reports.length,
-                        itemBuilder: (context, i) {
-                          final r = _reports[i];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              title: Text(r.category),
-                              subtitle: Text(r.description),
-                              trailing: Text(
-                                '${r.timestamp.toLocal()}'.split('.').first,
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+            ? ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Text(
+                'Could not load reports: $_error',
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        )
+            : _reports.isEmpty
+            ? ListView(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.xxl),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withOpacity(0.07),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.shield_outlined,
+                      size: 32,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Text(
+                    'No nearby reports yet',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        )
+            : ListView.builder(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          itemCount: _reports.length,
+          itemBuilder: (context, i) {
+            final r = _reports[i];
+
+            return Card(
+              margin: const EdgeInsets.only(
+                bottom: AppSpacing.sm + 4,
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                leading: Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(
+                      AppSpacing.radiusSm,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.report_outlined,
+                    color: AppTheme.accent,
+                  ),
+                ),
+                title: Text(
+                  r.category,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    r.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                trailing: Text(
+                  '${r.timestamp.toLocal()}'.split('.').first,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

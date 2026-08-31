@@ -4,6 +4,8 @@ import '../screens/home/home_screen.dart';
 import '../screens/search/search_screen.dart';
 import '../screens/chatbot/chatbot_screen.dart';
 import '../screens/itinerary/itinerary_screen.dart';
+import '../screens/community/community_screen.dart';
+import '../screens/socials/socials_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/drawer_stub_screens.dart';
 import '../core/state/auth_store.dart';
@@ -40,7 +42,6 @@ class _AppShellState extends State<AppShell> {
     CommunityScreen(),
     SocialsScreen(),
     PendantScreen(),
-    AppSettingsScreen(),
     ProfileScreen(),
   ];
 
@@ -53,9 +54,34 @@ class _AppShellState extends State<AppShell> {
     _DrawerItem(icon: Icons.groups_outlined, selectedIcon: Icons.groups, label: 'Community'),
     _DrawerItem(icon: Icons.play_circle_outline, selectedIcon: Icons.play_circle, label: 'Socials'),
     _DrawerItem(icon: Icons.watch_outlined, selectedIcon: Icons.watch, label: 'Sakhi Pendant'),
-    _DrawerItem(icon: Icons.settings_outlined, selectedIcon: Icons.settings, label: 'Settings'),
     _DrawerItem(icon: Icons.person_outline, selectedIcon: Icons.person, label: 'Profile'),
   ];
+
+  // Some screens need a title or actions that differ from the drawer label.
+  static const Map<int, String> _titleOverrides = {
+    5: 'Sakhi Sisterhood', // Community
+  };
+
+  List<Widget> _actionsFor(int index) {
+    switch (index) {
+      case 5: // Community
+        return [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: () {}, // TODO(backend): create-circle flow
+          ),
+        ];
+      case 6: // Socials
+        return [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () {}, // TODO(backend): create blog/reel flow
+          ),
+        ];
+      default:
+        return const [];
+    }
+  }
 
   void _select(int i) {
     Navigator.pop(context);
@@ -67,9 +93,10 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _drawerItems[_index].label,
+          _titleOverrides[_index] ?? _drawerItems[_index].label,
           style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
+        actions: _actionsFor(_index),
       ),
       drawer: Drawer(
         backgroundColor: AppTheme.background,

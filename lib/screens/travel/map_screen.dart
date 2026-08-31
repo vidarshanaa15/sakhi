@@ -3,6 +3,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_theme.dart';
 import '../../services/location_service.dart';
 import '../../services/route_service.dart';
 
@@ -13,7 +15,6 @@ import '../../models/route_leg.dart';
 import '../../services/safety_service.dart';
 
 import '../../widgets/safety_pill.dart';
-import '../../widgets/gradient_action_button.dart';
 
 class MapScreen extends StatefulWidget {
   final Destination destination;
@@ -28,20 +29,15 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  final LocationService _locationService =
-      LocationService();
+  final LocationService _locationService = LocationService();
 
-  final RouteService _routeService =
-      RouteService();
+  final RouteService _routeService = RouteService();
 
-  final GeocodingService _geocodingService =
-      GeocodingService();
+  final GeocodingService _geocodingService = GeocodingService();
 
-  final SafetyService _safetyService =
-      SafetyService();
+  final SafetyService _safetyService = SafetyService();
 
-  final MapController _mapController =
-      MapController();
+  final MapController _mapController = MapController();
 
   LatLng? _currentLocation;
 
@@ -59,7 +55,7 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> _loadCurrentLocation() async {
     final Position? position =
-        await _locationService.getCurrentLocation();
+    await _locationService.getCurrentLocation();
 
     if (!mounted) return;
 
@@ -93,7 +89,7 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     final destination =
-        await _geocodingService.getCoordinates(
+    await _geocodingService.getCoordinates(
       widget.destination.name,
     );
 
@@ -154,7 +150,7 @@ class _MapScreenState extends State<MapScreen> {
       final mockScores = [7.4, 9.1, 6.8];
 
       final score = mockScores[
-          i < mockScores.length ? i : mockScores.length - 1];
+      i < mockScores.length ? i : mockScores.length - 1];
 
       final evaluated = await _safetyService.evaluateRoute(
         leg,
@@ -224,36 +220,42 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (_loading) {
       return const Scaffold(
+        backgroundColor: AppTheme.background,
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: AppTheme.primary,
+          ),
         ),
       );
     }
 
     if (_currentLocation == null) {
       return Scaffold(
+        backgroundColor: AppTheme.background,
         appBar: AppBar(
           title: Text(widget.destination.name),
+          backgroundColor: AppTheme.background,
         ),
         body: const Center(
           child: Text(
             'Unable to access your location.\n'
-            'Please enable location permissions.',
+                'Please enable location permissions.',
             textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+            ),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLowest,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Text(widget.destination.name),
-        elevation: 0,
+        backgroundColor: AppTheme.background,
       ),
       body: Stack(
         children: [
@@ -266,7 +268,7 @@ class _MapScreenState extends State<MapScreen> {
             children: [
               TileLayer(
                 urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.sakhi_app',
               ),
 
@@ -281,8 +283,8 @@ class _MapScreenState extends State<MapScreen> {
                       points: route.points,
                       strokeWidth: isSelected ? 6 : 4,
                       color: isSelected
-                          ? colorScheme.primary
-                          : colorScheme.outline.withValues(alpha: 0.4),
+                          ? AppTheme.primary
+                          : AppTheme.textSecondary.withOpacity(0.4),
                     );
                   }).toList(),
                 ),
@@ -295,12 +297,15 @@ class _MapScreenState extends State<MapScreen> {
                     height: 46,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: colorScheme.primary,
+                        color: AppTheme.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 3,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: Colors.black.withOpacity(0.2),
                             blurRadius: 6,
                           ),
                         ],
@@ -318,33 +323,28 @@ class _MapScreenState extends State<MapScreen> {
           ),
 
           Positioned(
-            left: 16,
-            right: 16,
+            left: AppSpacing.md,
+            right: AppSpacing.md,
             bottom: 90,
             child: Column(
               children: [
-                if (_routes.isNotEmpty) _RouteOptionsCard(
-                  routes: _routes,
-                  selectedIndex: _selectedRouteIndex,
-                  labelFor: _routeLabel,
-                  iconFor: _routeIcon,
-                  onSelect: (index) {
-                    setState(() {
-                      _selectedRouteIndex = index;
-                    });
-                    _fitRoute(_routes[index].points);
-                  },
-                ),
-                const SizedBox(height: 10),
-                GradientActionButton(
-                  icon: Icons.route_rounded,
-                  label: _loadingRoute
-                      ? 'Finding route...'
-                      : (_routes.isEmpty ? 'Find route' : 'Refresh route'),
-                  subtitle: _routes.isEmpty
-                      ? 'See alternate paths & safety scores'
-                      : null,
+                if (_routes.isNotEmpty)
+                  _RouteOptionsCard(
+                    routes: _routes,
+                    selectedIndex: _selectedRouteIndex,
+                    labelFor: _routeLabel,
+                    iconFor: _routeIcon,
+                    onSelect: (index) {
+                      setState(() {
+                        _selectedRouteIndex = index;
+                      });
+                      _fitRoute(_routes[index].points);
+                    },
+                  ),
+                const SizedBox(height: AppSpacing.sm + 2),
+                _RouteActionButton(
                   loading: _loadingRoute,
+                  hasRoutes: _routes.isNotEmpty,
                   onTap: _createRoute,
                 ),
               ],
@@ -352,16 +352,113 @@ class _MapScreenState extends State<MapScreen> {
           ),
 
           Positioned(
-            right: 16,
-            bottom: 24,
+            right: AppSpacing.md,
+            bottom: AppSpacing.md,
             child: FloatingActionButton(
-              backgroundColor: colorScheme.surface,
-              foregroundColor: colorScheme.primary,
+              backgroundColor: AppTheme.surface,
+              foregroundColor: AppTheme.primary,
+              elevation: 3,
               onPressed: _goToCurrentLocation,
               child: const Icon(Icons.my_location_rounded),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RouteActionButton extends StatelessWidget {
+  final bool loading;
+  final bool hasRoutes;
+  final VoidCallback onTap;
+
+  const _RouteActionButton({
+    required this.loading,
+    required this.hasRoutes,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+      clipBehavior: Clip.antiAlias,
+      elevation: 5,
+      shadowColor: AppTheme.primary.withOpacity(0.25),
+      child: InkWell(
+        onTap: loading ? null : onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: AppTheme.primary,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: loading
+                    ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+                    : const Icon(
+                  Icons.route_rounded,
+                  color: Colors.white,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm + 4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      loading
+                          ? 'Finding route...'
+                          : (hasRoutes
+                          ? 'Refresh route'
+                          : 'Find route'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (!hasRoutes && !loading) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'See alternate paths & safety scores',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.72),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (!loading)
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white,
+                  size: 21,
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -384,16 +481,17 @@ class _RouteOptionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        border: Border.all(
+          color: Colors.black.withOpacity(0.06),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -404,34 +502,40 @@ class _RouteOptionsCard extends StatelessWidget {
         children: [
           Text(
             'Choose your route',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.sm + 2),
           ...routes.asMap().entries.map((entry) {
             final index = entry.key;
             final route = entry.value;
             final isSelected = index == selectedIndex;
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(
+                bottom: AppSpacing.sm,
+              ),
               child: InkWell(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(
+                  AppSpacing.radiusMd,
+                ),
                 onTap: () => onSelect(index),
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSpacing.sm + 2),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? colorScheme.primary.withValues(alpha: 0.08)
-                        : colorScheme.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(14),
+                        ? AppTheme.primary.withOpacity(0.07)
+                        : AppTheme.background,
+                    borderRadius: BorderRadius.circular(
+                      AppSpacing.radiusMd,
+                    ),
                     border: Border.all(
                       color: isSelected
-                          ? colorScheme.primary
-                          : colorScheme.outlineVariant.withValues(alpha: 0.5),
-                      width: isSelected ? 1.6 : 1,
+                          ? AppTheme.primary
+                          : Colors.black.withOpacity(0.07),
+                      width: isSelected ? 1.4 : 1,
                     ),
                   ),
                   child: Row(
@@ -440,8 +544,8 @@ class _RouteOptionsCard extends StatelessWidget {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? colorScheme.primary
-                              : colorScheme.surfaceContainerHighest,
+                              ? AppTheme.primary
+                              : AppTheme.primary.withOpacity(0.07),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -449,42 +553,50 @@ class _RouteOptionsCard extends StatelessWidget {
                           size: 16,
                           color: isSelected
                               ? Colors.white
-                              : colorScheme.onSurfaceVariant,
+                              : AppTheme.primary,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.sm + 4),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
                           children: [
                             Text(
                               labelFor(index, route),
                               style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(Icons.straighten_rounded,
-                                    size: 13, color: colorScheme.onSurfaceVariant),
+                                const Icon(
+                                  Icons.straighten_outlined,
+                                  size: 13,
+                                  color: AppTheme.textSecondary,
+                                ),
                                 const SizedBox(width: 3),
                                 Text(
                                   '${route.distanceKm.toStringAsFixed(1)} km',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    color: colorScheme.onSurfaceVariant,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppTheme.textSecondary,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-                                Icon(Icons.schedule_rounded,
-                                    size: 13, color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: AppSpacing.sm),
+                                const Icon(
+                                  Icons.schedule_outlined,
+                                  size: 13,
+                                  color: AppTheme.textSecondary,
+                                ),
                                 const SizedBox(width: 3),
                                 Text(
                                   '${route.durationMinutes} min',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    color: colorScheme.onSurfaceVariant,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppTheme.textSecondary,
                                   ),
                                 ),
                               ],
