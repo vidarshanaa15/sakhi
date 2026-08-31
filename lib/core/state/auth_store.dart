@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../backend/supabase/supabase_client.dart';
 import '../../models/aadhaar_verification_result.dart';
 
 /// Holds the user's DigiLocker/Aadhaar verification state app-wide, so
@@ -28,4 +30,27 @@ class AuthStore extends ChangeNotifier {
     _verificationResult = null;
     notifyListeners();
   }
+
+  // ---- Supabase login logic ----
+SupabaseClient get _client => SupabaseService.client;
+
+Future<AuthResponse> signIn({
+  required String email,
+  required String password,
+}) {
+  return _client.auth.signInWithPassword(
+    email: email,
+    password: password,
+  );
+}
+
+Future<AuthResponse> signUp({
+  required String email,
+  required String password,
+}) {
+  return _client.auth.signUp(
+    email: email,
+    password: password,
+  );
+}
 }

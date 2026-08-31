@@ -1,11 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../../models/chat_message.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/chat_input.dart';
+
+import '../../backend/chatbot/chatbot_backend.dart';
+import '../../core/network/api_client.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -16,15 +16,9 @@ class ChatbotScreen extends StatefulWidget {
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
   final List<ChatMessage> _messages = [];
+  final ChatbotBackend _chatbotBackend = ChatbotBackend();
 
   bool _isLoading = false;
-
-  // For Flutter running on the same Windows machine as FastAPI.
-  //
-  // If you later run Flutter on a physical phone, replace this with
-  // your computer's local IP address, for example:
-  // http://192.168.1.105:8000
-  static const String _baseUrl = 'http://127.0.0.1:8000';
 
   @override
   void initState() {
@@ -40,7 +34,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   Future<void> _sendMessage(String text) async {
-    if (_isLoading) return;
+    if (_isLoading || text.trim().isEmpty) return;
 
     setState(() {
       _messages.add(
@@ -54,52 +48,40 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/chat'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'message': text,
-        }),
-      );
+      final reply = await _chatbotBackend.sendMessage(text);
 
       if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: reply.isNotEmpty
+                ? reply
+                : 'Sorry, I could not generate a response.',
+            isUser: false,
+          ),
+        );
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
 
-        final reply = data['reply']?.toString();
-
-        setState(() {
-          _messages.add(
-            ChatMessage(
-              text: reply?.isNotEmpty == true
-                  ? reply!
-                  : 'Sorry, I could not generate a response.',
-              isUser: false,
-            ),
-          );
-        });
-      } else {
-        setState(() {
-          _messages.add(
-            ChatMessage(
-              text:
-                  'Sorry, I could not connect to Sakhi right now. Please try again.',
-              isUser: false,
-            ),
-          );
-        });
-      }
+      setState(() {
+        _messages.add(
+          ChatMessage(
+            text: 'Sorry, I could not connect to Sakhi right now. '
+                '${e.message}',
+            isUser: false,
+          ),
+        );
+      });
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
         _messages.add(
           ChatMessage(
-            text:
-                'Unable to connect to the Sakhi server. Please check that the backend is running.',
+            text: 'Unable to connect to the Sakhi server. '
+                'Please check that the backend is running.',
             isUser: false,
           ),
         );

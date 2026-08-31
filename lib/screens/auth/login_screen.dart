@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../widgets/app_shell.dart';
 import '../auth/digilocker_auth_screen.dart';
+import '../../core/state/auth_store.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -57,42 +60,50 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    setState(() => _authError = null);
+  setState(() => _authError = null);
 
-    // Validate the form first.
-    final isValid = _formKey.currentState?.validate() ?? false;
+  final isValid = _formKey.currentState?.validate() ?? false;
+  if (!isValid) return;
 
-    if (!isValid) return;
+  setState(() => _isSubmitting = true);
 
-    setState(() => _isSubmitting = true);
+  final email = _emailController.text.trim();
+  final password = _passwordController.text;
 
-    // TODO: Replace with real authentication call.
-    // DigiLocker/Aadhaar authentication flow comes separately.
-    await Future.delayed(const Duration(milliseconds: 400));
-
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    // Additional safety check.
-    if (email.isEmpty || password.isEmpty) {
-      setState(() {
-        _isSubmitting = false;
-        _authError = 'Email and password are required.';
-      });
-      return;
-    }
+  try {
+    final response = await AuthStore.instance.signIn(
+      email: email,
+      password: password,
+    );
 
     if (!mounted) return;
 
-    setState(() => _isSubmitting = false);
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const AppShell(),
-      ),
-    );
+    if (response.session != null) {
+      setState(() => _isSubmitting = false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AppShell()),
+      );
+    } else {
+      setState(() {
+        _isSubmitting = false;
+        _authError = 'Login failed. Please try again.';
+      });
+    }
+  } on AuthException catch (e) {
+    if (!mounted) return;
+    setState(() {
+      _isSubmitting = false;
+      _authError = e.message;
+    });
+  } catch (e) {
+    if (!mounted) return;
+    setState(() {
+      _isSubmitting = false;
+      _authError = 'Something went wrong. Please check your connection.';
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -238,6 +249,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Verify with DigiLocker',
                     ),
                   ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Sign up link
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignupScreen()),
+                    );
+                  },
+                  child: const Text("Don't have an account? Sign up"),
                 ),
               ],
             ),
