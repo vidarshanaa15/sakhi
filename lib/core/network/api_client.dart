@@ -19,7 +19,7 @@ class ApiClient {
   static final ApiClient instance = ApiClient._internal();
 
   // TODO: point this at your FastAPI deployment (or load from --dart-define / env config).
-  static const String baseUrl = 'https://YOUR_FASTAPI_HOST';
+  static const String baseUrl = 'http://127.0.0.1:8000';
 
   /// Set this from wherever auth/session state lives (e.g. after login).
   /// Returning null means requests go out unauthenticated.

@@ -7,7 +7,7 @@ class SafetyReportService {
   final LocationService _locationService = LocationService();
 
   /// Flip to false once a real FastAPI backend is available.
-  static const bool useMockData = true;
+  static const bool useMockData = false;
 
   static final List<SafetyReport> _mockReports = [
     SafetyReport(
