@@ -4,4 +4,11 @@ class AppSpacing {
   static const double md = 16;
   static const double lg = 24;
   static const double xl = 32;
+  static const double xxl = 40;
+
+  // Border radii — used everywhere instead of hardcoding circular() values
+  static const double radiusSm = 12;
+  static const double radiusMd = 16;
+  static const double radiusLg = 20;
+  static const double radiusPill = 999;
 }

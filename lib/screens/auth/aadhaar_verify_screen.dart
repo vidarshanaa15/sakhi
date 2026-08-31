@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import '../../services/aadhaar_verification_service.dart';
 import '../../models/aadhaar_verification_result.dart';
 import '../../core/state/auth_store.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_spacing.dart';
 import '../../widgets/app_shell.dart';
 
-/// Collects the DigiLocker offline e-KYC ZIP + share code and runs
-/// verification against UIDAI's public certificate (via the backend —
-/// AadhaarVerificationService is currently a mock, see that file).
 class AadhaarVerifyScreen extends StatefulWidget {
   const AadhaarVerifyScreen({super.key});
 
@@ -28,8 +27,6 @@ class _AadhaarVerifyScreenState extends State<AadhaarVerifyScreen> {
     super.dispose();
   }
 
-  // TODO: swap for a real file picker (e.g. file_picker package) once
-  // that dependency is added — `flutter pub add file_picker`.
   void _pickZipFile() {
     setState(() => _selectedFileName = 'aadhaar-offline-ekyc.zip');
   }
@@ -62,14 +59,9 @@ class _AadhaarVerifyScreenState extends State<AadhaarVerifyScreen> {
 
     if (result.verified) {
       AuthStore.instance.markVerified(result);
-
       await Future.delayed(const Duration(milliseconds: 700));
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const AppShell()),
-            (route) => false,
-      );
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const AppShell()), (route) => false);
     }
   }
 
@@ -80,55 +72,56 @@ class _AadhaarVerifyScreenState extends State<AadhaarVerifyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(title: const Text('Aadhaar Verification')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Upload the ZIP file DigiLocker gave you and enter the share code (its password).',
-              style: TextStyle(height: 1.4),
+              style: TextStyle(height: 1.4, color: AppTheme.textSecondary),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSpacing.lg),
 
             OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: AppSpacing.md),
+                foregroundColor: AppTheme.primary,
+                side: BorderSide(color: AppTheme.primary.withOpacity(0.35)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
+                alignment: Alignment.centerLeft,
+              ),
               onPressed: _isVerifying ? null : _pickZipFile,
               icon: const Icon(Icons.attach_file),
               label: Text(_selectedFileName ?? 'Select offline e-KYC ZIP file'),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
 
             TextField(
               controller: _shareCodeController,
               enabled: !_isVerifying,
-              decoration: const InputDecoration(
-                labelText: 'Share code',
-                hintText: 'e.g. A1B2',
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(labelText: 'Share code', hintText: 'e.g. A1B2'),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.lg),
 
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: _isVerifying ? null : _verify,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: _isVerifying
-                      ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                      : const Text('Verify identity'),
-                ),
+                child: _isVerifying
+                    ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+                    : const Text('Verify identity'),
               ),
             ),
 
             if (_result != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.lg),
               _VerificationResultCard(result: _result!),
             ],
           ],
@@ -145,30 +138,37 @@ class _VerificationResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ok = result.verified;
-    return Card(
-      color: ok ? Colors.green.withOpacity(0.08) : Colors.red.withOpacity(0.08),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(ok ? Icons.check_circle : Icons.error_outline, color: ok ? Colors.green : Colors.red),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ok
-                  ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Identity verified', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text('${result.name} · ${result.gender} · born ${result.yearOfBirth}'),
-                  Text('Reference: ${result.referenceId}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
-              )
-                  : Text(result.errorMessage ?? 'Verification failed'),
-            ),
-          ],
-        ),
+    final color = ok ? AppTheme.safetyGreen : AppTheme.safetyRed;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(ok ? Icons.check_circle : Icons.error_outline, color: color),
+          const SizedBox(width: AppSpacing.sm + 4),
+          Expanded(
+            child: ok
+                ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Identity verified', style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+                const SizedBox(height: 4),
+                Text('${result.name} · ${result.gender} · born ${result.yearOfBirth}'),
+                const SizedBox(height: 2),
+                Text(
+                  'Reference: ${result.referenceId}',
+                  style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                ),
+              ],
+            )
+                : Text(result.errorMessage ?? 'Verification failed', style: TextStyle(color: color)),
+          ),
+        ],
       ),
     );
   }

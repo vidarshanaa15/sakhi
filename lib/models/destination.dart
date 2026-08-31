@@ -21,14 +21,14 @@ final List<Destination> mockDestinations = [
   const Destination(
     id: '1',
     name: 'Munnar, Kerala',
-    imageUrl: 'https://picsum.photos/seed/munnar/600/400',
+    imageUrl: 'https://i.ibb.co/jPNGRZDy/munnar.jpg',
     safetyScore: 8.7,
     description: 'Tea plantations and hill trails, well-trodden and well-lit.',
   ),
   const Destination(
     id: '2',
     name: 'Chopta, Uttarakhand',
-    imageUrl: 'https://picsum.photos/seed/chopta/600/400',
+    imageUrl: 'https://i.ibb.co/gLPF8HSm/chopta.jpg',
     safetyScore: 7.9,
     description: 'A quieter Himalayan trek base with growing solo-traveler reviews.',
     isHiddenGem: true,
@@ -36,7 +36,7 @@ final List<Destination> mockDestinations = [
   const Destination(
     id: '3',
     name: 'Gokarna, Karnataka',
-    imageUrl: 'https://picsum.photos/seed/gokarna/600/400',
+    imageUrl: 'https://i.ibb.co/cKsKHpCq/gokarna.jpg',
     safetyScore: 7.2,
     description: 'Beach town with mixed reports — safer in the main beach cluster.',
   ),

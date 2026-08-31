@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/app_shell.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_spacing.dart';
 
 class EmergencyContact {
   final TextEditingController nameController = TextEditingController();
@@ -12,9 +14,9 @@ class EmergencyContact {
   }
 
   Map<String, dynamic> toJson() => {
-        'name': nameController.text.trim(),
-        'phone': phoneController.text.trim(),
-      };
+    'name': nameController.text.trim(),
+    'phone': phoneController.text.trim(),
+  };
 }
 
 class ProfileSetupScreen extends StatefulWidget {
@@ -36,16 +38,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _genderOptions = const ['Female', 'Male', 'Other', 'Prefer not to say'];
 
   static const _interestOptions = [
-    'Reading',
-    'Fitness',
-    'Travel',
-    'Music',
-    'Cooking',
-    'Art',
-    'Technology',
-    'Sports',
-    'Movies',
-    'Volunteering',
+    'Reading', 'Fitness', 'Travel', 'Music', 'Cooking',
+    'Art', 'Technology', 'Sports', 'Movies', 'Volunteering',
   ];
   final Set<String> _selectedInterests = {};
 
@@ -66,33 +60,18 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
-  String? _validateName(String? value) {
-    final v = value?.trim() ?? '';
-    if (v.isEmpty) return 'Enter your name';
-    return null;
-  }
-
-  String? _validatePhone(String? value) {
-    final v = value?.trim() ?? '';
-    if (v.isEmpty) return 'Enter your phone number';
-    return null;
-  }
+  String? _validateName(String? value) => (value?.trim().isEmpty ?? true) ? 'Enter your name' : null;
+  String? _validatePhone(String? value) => (value?.trim().isEmpty ?? true) ? 'Enter your phone number' : null;
 
   String? _validateAge(String? value) {
     final v = value?.trim() ?? '';
-    if (v.isEmpty) return null; // optional
+    if (v.isEmpty) return null;
     final age = int.tryParse(v);
-    if (age == null || age <= 0 || age > 120) {
-      return 'Enter a valid age';
-    }
+    if (age == null || age <= 0 || age > 120) return 'Enter a valid age';
     return null;
   }
 
-  void _addEmergencyContact() {
-    setState(() {
-      _emergencyContacts.add(EmergencyContact());
-    });
-  }
+  void _addEmergencyContact() => setState(() => _emergencyContacts.add(EmergencyContact()));
 
   void _removeEmergencyContact(int index) {
     setState(() {
@@ -103,7 +82,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   Future<void> _handleSave() async {
     setState(() => _errorMessage = null);
-
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) return;
 
@@ -116,15 +94,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     setState(() => _isSubmitting = true);
 
     final contacts = _emergencyContacts
-        .where((c) =>
-            c.nameController.text.trim().isNotEmpty ||
-            c.phoneController.text.trim().isNotEmpty)
+        .where((c) => c.nameController.text.trim().isNotEmpty || c.phoneController.text.trim().isNotEmpty)
         .map((c) => c.toJson())
         .toList();
 
-    final age = _ageController.text.trim().isEmpty
-        ? null
-        : int.tryParse(_ageController.text.trim());
+    final age = _ageController.text.trim().isEmpty ? null : int.tryParse(_ageController.text.trim());
 
     try {
       await Supabase.instance.client.from('profiles').update({
@@ -138,10 +112,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       }).eq('userid', user.id);
 
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AppShell()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AppShell()));
     } on PostgrestException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -158,122 +129,110 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   }
 
   void _handleSkip() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const AppShell()),
-    );
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AppShell()));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Complete your profile'),
         automaticallyImplyLeading: false,
         actions: [
           TextButton(
             onPressed: _isSubmitting ? null : _handleSkip,
+            style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
             child: const Text('Skip for now'),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Tell us a bit about yourself so we can keep you safe.',
-                style: TextStyle(fontSize: 14, color: Colors.black54),
+                style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
               ),
-
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.lg),
 
               TextFormField(
                 controller: _nameController,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Full name',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Full name'),
                 validator: _validateName,
               ),
-
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm + 4),
 
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Phone number',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Phone number'),
                 validator: _validatePhone,
               ),
-
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm + 4),
 
               TextFormField(
                 controller: _homeLocationController,
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Home location',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Home location'),
               ),
-
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm + 4),
 
               Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _gender,
-                      decoration: const InputDecoration(
-                        labelText: 'Gender',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _genderOptions
-                          .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                          .toList(),
+                      decoration: const InputDecoration(labelText: 'Gender'),
+                      items: _genderOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                       onChanged: (value) => setState(() => _gender = value),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.sm + 4),
                   Expanded(
                     child: TextFormField(
                       controller: _ageController,
                       keyboardType: TextInputType.number,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Age',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: const InputDecoration(labelText: 'Age'),
                       validator: _validateAge,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.lg),
 
-              const SizedBox(height: 20),
-
-              const Text(
-                'Interests',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              Text(
+                'INTERESTS',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: AppTheme.textSecondary),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
                 children: _interestOptions.map((interest) {
                   final selected = _selectedInterests.contains(interest);
                   return FilterChip(
                     label: Text(interest),
                     selected: selected,
+                    showCheckmark: false,
+                    backgroundColor: Colors.white,
+                    selectedColor: AppTheme.primary.withOpacity(0.12),
+                    labelStyle: TextStyle(
+                      color: selected ? AppTheme.primary : AppTheme.textPrimary,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                      side: BorderSide(color: selected ? AppTheme.primary : Colors.black.withOpacity(0.1)),
+                    ),
                     onSelected: (isSelected) {
                       setState(() {
                         if (isSelected) {
@@ -286,55 +245,49 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   );
                 }).toList(),
               ),
-
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.lg),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Emergency contacts',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  Text(
+                    'EMERGENCY CONTACTS',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: AppTheme.textSecondary),
                   ),
                   TextButton.icon(
                     onPressed: _addEmergencyContact,
-                    icon: const Icon(Icons.add),
+                    style: TextButton.styleFrom(foregroundColor: AppTheme.primary),
+                    icon: const Icon(Icons.add, size: 18),
                     label: const Text('Add'),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
 
               ...List.generate(_emergencyContacts.length, (index) {
                 final contact = _emergencyContacts[index];
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm + 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: TextFormField(
                           controller: contact.nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Contact name',
-                            border: OutlineInputBorder(),
-                          ),
+                          decoration: const InputDecoration(labelText: 'Contact name'),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: TextFormField(
                           controller: contact.phoneController,
                           keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(
-                            labelText: 'Contact phone',
-                            border: OutlineInputBorder(),
-                          ),
+                          decoration: const InputDecoration(labelText: 'Contact phone'),
                         ),
                       ),
                       if (_emergencyContacts.length > 1)
                         IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
+                          icon: Icon(Icons.remove_circle_outline, color: AppTheme.safetyRed),
                           onPressed: () => _removeEmergencyContact(index),
                         ),
                     ],
@@ -343,32 +296,31 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               }),
 
               if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red, fontSize: 13),
+                const SizedBox(height: AppSpacing.sm),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: AppTheme.safetyRed.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                  child: Text(_errorMessage!, style: const TextStyle(color: AppTheme.safetyRed, fontSize: 13)),
                 ),
               ],
 
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.lg),
 
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _isSubmitting ? null : _handleSave,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Save and continue'),
-                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                      : const Text('Save and continue'),
                 ),
               ),
             ],

@@ -1,50 +1,42 @@
 import 'package:flutter/material.dart';
+import '../core/theme/app_theme.dart';
 
-/// Shared color coding for safety scores (0-10) used across map screens.
 Color safetyColorFor(double? score) {
   if (score == null) return const Color(0xFF9E9E9E);
-  if (score >= 8.0) return const Color(0xFF2E7D5B); // safe green
-  if (score >= 6.5) return const Color(0xFFC98A2C); // caution amber
-  return const Color(0xFFC1473F); // risk red
+  if (score >= 8.0) return AppTheme.safetyGreen;
+  if (score >= 6.5) return AppTheme.safetyAmber;
+  return AppTheme.safetyRed;
 }
 
-/// A small color-coded pill showing a safety score. Used anywhere a route
-/// or destination's safety rating needs to be shown compactly and
-/// consistently across the app.
 class SafetyPill extends StatelessWidget {
   final double? score;
   final String? label;
+  final bool solid; // true = filled badge (like the "7.5/10" card badge), false = soft chip
 
-  const SafetyPill({
-    super.key,
-    this.score,
-    this.label,
-  });
+  const SafetyPill({super.key, this.score, this.label, this.solid = false});
 
   @override
   Widget build(BuildContext context) {
     final color = safetyColorFor(score);
+    final text = label ?? (score != null ? '${score!.toStringAsFixed(1)}/10' : '--');
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: solid ? color : color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.shield_rounded, size: 13, color: color),
+          Icon(Icons.shield_rounded, size: 13, color: solid ? Colors.white : color),
           const SizedBox(width: 4),
           Text(
-            label ??
-                (score != null
-                    ? '${score!.toStringAsFixed(1)}/10'
-                    : '--'),
+            text,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: color,
+              color: solid ? Colors.white : color,
             ),
           ),
         ],
