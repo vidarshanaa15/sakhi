@@ -575,36 +575,52 @@ class _LegCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Row(
+                // FIX: this used to be a single Row with a Spacer + SafetyPill,
+                // which overflowed horizontally when the pill's label text
+                // ("9.1/10 • Very Safe") was too long to fit alongside the
+                // distance/duration on narrow screens. Wrap lets the pill
+                // drop to its own line instead of overflowing.
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppSpacing.sm + 4,
+                  runSpacing: AppSpacing.xs,
                   children: [
-                    const Icon(
-                      Icons.straighten_outlined,
-                      size: 13,
-                      color: AppTheme.textSecondary,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.straighten_outlined,
+                          size: 13,
+                          color: AppTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${leg.distanceKm.toStringAsFixed(1)} km',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 3),
-                    Text(
-                      '${leg.distanceKm.toStringAsFixed(1)} km',
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        color: AppTheme.textSecondary,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.schedule_outlined,
+                          size: 13,
+                          color: AppTheme.textSecondary,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          formatDuration(leg.durationMinutes),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    const Icon(
-                      Icons.schedule_outlined,
-                      size: 13,
-                      color: AppTheme.textSecondary,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      formatDuration(leg.durationMinutes),
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                    const Spacer(),
                     if (leg.safetyScore != null)
                       SafetyPill(
                         score: leg.safetyScore,

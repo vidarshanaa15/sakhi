@@ -7,6 +7,7 @@ import '../../services/evidence_service.dart';
 import '../report/nearby_reports_screen.dart';
 import '../report/submit_report_screen.dart';
 import '../evidence/evidence_screen.dart';
+import '../chatbot/chatbot_screen.dart';
 
 /// Landing screen after login: welcome + at-a-glance usage stats.
 ///
@@ -69,6 +70,13 @@ class DashboardScreen extends StatelessWidget {
         ),
       );
     }
+  }
+
+  void _openChatbot(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ChatbotScreen()),
+    );
   }
 
   @override
@@ -283,9 +291,7 @@ class DashboardScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(
                   AppSpacing.radiusMd,
                 ),
-                onTap: () {
-                  // Existing dashboard had no navigation logic here.
-                },
+                onTap: () => _openChatbot(context),
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: Row(
@@ -508,9 +514,6 @@ class _StatCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Stack(
           children: [
-            // -------------------------------------------------------------
-            // Icon — top right
-            // -------------------------------------------------------------
             Positioned(
               top: 0,
               right: 0,
@@ -530,10 +533,6 @@ class _StatCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            // -------------------------------------------------------------
-            // Value + label — bottom left
-            // -------------------------------------------------------------
             Positioned(
               left: 0,
               right: 0,

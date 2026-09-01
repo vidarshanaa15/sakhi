@@ -5,6 +5,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/user_profile.dart';
 import '../auth/login_screen.dart';
+import '../auth/digilocker_auth_screen.dart';
 import '../../widgets/section_header.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -74,50 +75,63 @@ class ProfileScreen extends StatelessWidget {
             builder: (context, _) {
               final verified = AuthStore.instance.isVerified;
 
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.sm + 2,
-                  vertical: AppSpacing.sm,
+              return InkWell(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusPill),
+                onTap: verified
+                    ? null // already verified — nothing to do
+                    : () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DigiLockerAuthScreen()),
                 ),
-                decoration: BoxDecoration(
-                  color: verified
-                      ? AppTheme.safetyGreen.withOpacity(0.08)
-                      : AppTheme.accent.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(
-                    AppSpacing.radiusPill,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm + 2,
+                    vertical: AppSpacing.sm,
                   ),
-                  border: Border.all(
+                  decoration: BoxDecoration(
                     color: verified
-                        ? AppTheme.safetyGreen.withOpacity(0.16)
-                        : AppTheme.accent.withOpacity(0.16),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      verified
-                          ? Icons.verified_user_outlined
-                          : Icons.gpp_maybe_outlined,
-                      size: 17,
-                      color: verified
-                          ? AppTheme.safetyGreen
-                          : AppTheme.accent,
+                        ? AppTheme.safetyGreen.withOpacity(0.08)
+                        : AppTheme.accent.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(
+                      AppSpacing.radiusPill,
                     ),
-                    const SizedBox(width: 7),
-                    Text(
-                      verified
-                          ? 'Verified via DigiLocker'
-                          : 'Identity not verified',
-                      style: TextStyle(
+                    border: Border.all(
+                      color: verified
+                          ? AppTheme.safetyGreen.withOpacity(0.16)
+                          : AppTheme.accent.withOpacity(0.16),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        verified
+                            ? Icons.verified_user_outlined
+                            : Icons.gpp_maybe_outlined,
+                        size: 17,
                         color: verified
                             ? AppTheme.safetyGreen
                             : AppTheme.accent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 7),
+                      Text(
+                        verified
+                            ? 'Verified via DigiLocker'
+                            : 'Identity not verified',
+                        style: TextStyle(
+                          color: verified
+                              ? AppTheme.safetyGreen
+                              : AppTheme.accent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (!verified) ...[
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right, size: 15, color: AppTheme.accent.withOpacity(0.7)),
+                      ],
+                    ],
+                  ),
                 ),
               );
             },
