@@ -101,7 +101,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final age = _ageController.text.trim().isEmpty ? null : int.tryParse(_ageController.text.trim());
 
     try {
-      await Supabase.instance.client.from('profiles').update({
+      await Supabase.instance.client.from('profiles').upsert({
+        'userid': user.id,
         'name': _nameController.text.trim(),
         'phone_number': _phoneController.text.trim(),
         'home_location': _homeLocationController.text.trim(),
@@ -109,7 +110,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         'age': age,
         'interests': _selectedInterests.toList(),
         'emergency_contacts': contacts,
-      }).eq('userid', user.id);
+        'profile_complete': true,
+      });
 
       if (!mounted) return;
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AppShell()));

@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_spacing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'signup_screen.dart';
+import 'profile_setup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,6 +47,14 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
+  Future<bool> _hasCompletedProfile(String userId) async {
+  final data = await Supabase.instance.client
+      .from('profiles')
+      .select('profile_complete')
+      .eq('userid', userId)
+      .maybeSingle();
+  return data?['profile_complete'] == true;
+}
   Future<void> _handleLogin() async {
     setState(() => _authError = null);
     final isValid = _formKey.currentState?.validate() ?? false;
@@ -60,8 +69,15 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (response.session != null) {
+        final completed = await _hasCompletedProfile(response.session!.user.id);
+        if (!mounted) return;
         setState(() => _isSubmitting = false);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AppShell()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => completed ? const AppShell() : const ProfileSetupScreen(),
+          ),
+        );
       } else {
         setState(() {
           _isSubmitting = false;

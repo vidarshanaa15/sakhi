@@ -54,8 +54,8 @@ class _NearbyReportsScreenState extends State<NearbyReportsScreen> {
         backgroundColor: AppTheme.background,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color.fromRGBO(59, 26, 50, 1),
-        foregroundColor: const Color.from(alpha: 1, red: 1, green: 1, blue: 1),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
         onPressed: () async {
           await Navigator.push(
             context,
@@ -65,8 +65,6 @@ class _NearbyReportsScreenState extends State<NearbyReportsScreen> {
           );
           _load();
         },
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.add_alert_outlined),
         label: const Text('Report'),
       ),

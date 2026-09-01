@@ -91,6 +91,7 @@ class _SignupScreenState extends State<SignupScreen> {
         setState(() => _isSubmitting = false);
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProfileSetupScreen()));
       } else if (response.user != null) {
+        await _createProfile(response.user!); // ADDED — ensures row exists even pre-confirmation
         setState(() {
           _isSubmitting = false;
           _infoMessage = 'Account created. Check your email to confirm before logging in.';
